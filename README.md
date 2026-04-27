@@ -1,7 +1,3 @@
-Here is your updated, ADHD-friendly `README.md`. It reflects the latest unified YAML structure and the 0.2.0 features.
-
-***
-
 # Obsidian Habit Heatmap
 
 A visual, gamified dashboard for tracking habits and life stats directly from your Daily Notes.
