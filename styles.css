@@ -1,62 +1,50 @@
-/* --- 1. CORE LAYOUT --- */
-.dashboard-wrapper { display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; width: 100%; }
-.xp-container { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 20px; }
-
-/* --- 2. HABIT CARDS --- */
-.hm-card { 
-    position: relative; 
-    background: var(--background-secondary); 
-    border: 1px solid var(--background-modifier-border); 
-    border-radius: 8px; 
-    padding: 12px !important; 
-    display: flex; 
-    flex-direction: column; 
-    align-items: center; 
-    overflow: hidden;
-    transition: all 0.2s ease;
+/* --- 1. LAYOUT & GRID --- */
+.dashboard-wrapper {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 15px;
+    width: 100%;
+    margin-top: 20px;
 }
 
-/* Done State: Clean Accent Border */
-.hm-card-done { 
+/* --- 2. HABIT CARDS --- */
+.hm-card {
+    position: relative;
+    background: var(--background-secondary);
+    border: 1px solid var(--background-modifier-border);
+    border-radius: 8px;
+    padding: 10px !important;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    overflow: visible; /* Changed from hidden to allow tooltips */
+    transition: all 0.2s ease;
+    gap: 8px;
+}
+
+.hm-card-done {
     border: 1px solid var(--text-accent) !important;
     box-shadow: 0 0 10px rgba(var(--text-accent-rgb), 0.2);
 }
 
-.hm-card h3 { 
-    margin: 4px 0 2px 0; 
-    font-size: 1em; 
+.hm-card h3 {
+    margin: 5px 0 0 0;
+    font-size: 1.05em;
     text-align: center;
     width: 100%;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    gap: 8px;
 }
 
-/* Footer styling for the 3-column data */
-.hm-footer { 
-    font-size: 0.8em; 
-    color: var(--text-muted); 
-
-    width: 100%; 
-
-    text-align: center; 
-
+.hm-footer {
+    font-size: 0.8em;
+    color: var(--text-muted);
+    width: 100%;
+    text-align: center;
+    pointer-events: auto;
 }
 
-
-
-/* --- 3. MIRROR BADGES (Mastery & Rank) --- */
-.mastery-container { position: absolute; top: 10px; left: 10px; display: flex; flex-direction: column; align-items: flex-start; gap: 3px; }
-/* Update this in your CSS snippet */
-.rank-container { 
-    position: absolute; 
-    top: 10px; 
-    right: 10px; 
-    display: flex; 
-    flex-direction: column; 
-    align-items: flex-end; 
-}
+/* --- 3. BADGES (Mastery & Rank) --- */
+.mastery-container { position: absolute; top: 10px; left: 10px; display: flex; flex-direction: column; gap: 3px; }
+.rank-container { position: absolute; top: 10px; right: 10px; display: flex; flex-direction: column; align-items: flex-end; }
 
 .mastery-badge, .rank-badge {
     font-size: 0.55em;
@@ -70,113 +58,101 @@
 
 .mastery-badge { background: var(--background-modifier-border-hover); color: var(--text-muted); }
 
-/* Rank Specific Colors */
-.rank-iron { background: #726154; } .rank-bronze { background: #cd7f32; } .rank-silver { background: #a8a8a8; } 
-.rank-gold { background: #d4af37; color: black; } .rank-platinum { background: #317f8b; } 
-.rank-emerald { background: #2ecc71; } .rank-diamond { background: #52adc8; box-shadow: 0 0 5px #52adc8; }
+/* Rank Colors */
+.rank-iron { background: #726154; } 
+.rank-bronze { background: #cd7f32; } 
+.rank-silver { background: #a8a8a8; } 
+.rank-gold { background: #d4af37; color: black; } 
+.rank-platinum { background: #317f8b; } 
+.rank-emerald { background: #2ecc71; } 
+.rank-diamond { background: #52adc8; box-shadow: 0 0 5px #52adc8; }
 
-/* Badge Progress Bars */
 .rank-progress-outer { width: 35px; height: 2px; background: var(--background-modifier-border); border-radius: 1px; overflow: hidden; }
 .rank-progress-inner { height: 100%; background: var(--text-accent); }
 .mastery-container .rank-progress-inner { background: var(--text-faint); }
 
 /* --- 4. HEATMAP GRID --- */
-.hm-months-wrapper { display: flex; gap: 10px; margin-bottom: 4px; }
+.hm-months-wrapper {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 10px;
+    width: 100%;
+    justify-content: center;
+    overflow-x: auto;
+    padding-bottom: 4px;
+}
+.hm-months-wrapper::-webkit-scrollbar { display: none; }
+
 .hm-month { display: grid; grid-template-rows: repeat(7, 12px); grid-auto-flow: column; gap: 3px; }
-.hm-cell { width: 12px; height: 12px; border-radius: 2px; }
+.hm-cell { width: 12px; height: 12px; border-radius: 2px; cursor: help; }
 .hm-hidden { visibility: hidden; }
 .hm-today { outline: 1px solid var(--text-faint); outline-offset: 1px; z-index: 1; }
 
 /* --- 5. STREAKS & TRENDS --- */
-/* Card Height Optimization */
-.hm-card { padding: 10px !important; gap: 8px; }
-
-/* Perfectly Centered Title */
-.hm-card h3 { 
-    margin: 5px 0 0 0; 
-    font-size: 1.05em; 
-    text-align: center;
-    width: 100%;
-}
-
-
-/* Keep icons small in the footer */
-.streak-active, .streak-warning { font-size: 1em; }
-/* Streak Icons in Footer */
-.streak-active { 
-    color: #ff9500; 
-    font-weight: bold; 
-    cursor: help; /* Indicates there is a tooltip */
-}
-
-/* Star Evolution Color */
-.hm-pr-enchanted .streak-active { 
-    color: #ffd700; 
-    text-shadow: 0 0 8px rgba(255, 215, 0, 0.4); 
-}
+.streak-active { color: #ff9500; font-weight: bold; }
 .streak-warning { color: #ff3b30; animation: pulse 1.5s infinite; font-weight: bold; }
-.ghost-streak { opacity: 0.4; font-size: 0.8em; margin-left: 2px; font-weight: normal; }
 .trend-good { color: var(--text-success); font-weight: bold; }
 .trend-bad { color: var(--text-error); font-weight: bold; }
 
 /* --- 6. PROGRESS BARS (Global & Quest) --- */
-.quest-container { margin-bottom: 15px; background: rgba(var(--text-accent-rgb), 0.05); padding: 10px; border-radius: 8px; border: 1px dashed var(--text-faint); }
-.quest-label { display: flex; justify-content: space-between; font-size: 0.75em; font-weight: bold; margin-bottom: 6px; color: var(--text-muted); }
-.quest-bar-outer { height: 6px; background: var(--background-modifier-hover); border-radius: 3px; overflow: hidden; }
-.quest-bar-inner { height: 100%; background: linear-gradient(90deg, #00d2ff, #3a7bd5); transition: width 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+.quest-container { 
+    margin-bottom: 15px; 
+    background: rgba(var(--text-accent-rgb), 0.05); 
+    padding: 10px; 
+    border-radius: 8px; 
+    border: 1px dashed var(--text-faint); 
+}
+.quest-label, .global-xp-label, .xp-label { 
+    display: flex; 
+    justify-content: space-between; 
+    font-weight: bold; 
+}
+.quest-label { font-size: 0.75em; margin-bottom: 6px; color: var(--text-muted); }
 
-.global-xp-wrapper, .xp-bar-wrapper { background: var(--background-secondary); border-radius: 8px; padding: 12px; border: 1px solid var(--background-modifier-border); }
-.global-xp-wrapper { border-color: var(--text-accent); text-align: center; margin-bottom: 20px; }
-.global-xp-label, .xp-label { font-size: 0.9em; font-weight: bold; margin-bottom: 8px; display: flex; justify-content: space-between; }
-.xp-bar-outer { display: flex; background: var(--background-modifier-hover); height: 8px; border-radius: 4px; overflow: hidden; }
+.quest-bar-outer, .xp-bar-outer { background: var(--background-modifier-hover); border-radius: 4px; overflow: hidden; }
+.quest-bar-outer { height: 6px; }
+.quest-bar-inner { height: 100%; background: linear-gradient(90deg, #00d2ff, #3a7bd5); transition: width 0.5s ease; }
+
+.global-xp-wrapper { 
+    background: var(--background-secondary); 
+    border-radius: 8px; 
+    padding: 12px; 
+    border: 1px solid var(--text-accent); 
+    text-align: center; 
+    margin-bottom: 20px; 
+}
+.global-xp-label { font-size: 0.9em; margin-bottom: 8px; }
+.global-xp-label span:first-child { letter-spacing: 1px; text-transform: uppercase; font-size: 0.85em; color: var(--text-accent); }
+
+.xp-bar-outer { display: flex; height: 8px; }
 .xp-bar-inner { height: 100%; transition: width 0.5s; }
 .today-highlight { background: white; box-shadow: 0 0 8px white; opacity: 0.8; }
 
-/* --- 7. SPECIAL EFFECTS --- */
-/* Perfect Day Gold Glow */
-.perfect-day-glow { border: 2px solid #D4AF37 !important; background: rgba(184, 134, 11, 0.08) !important; animation: pulse-warm-gold 2s infinite; }
+/* --- 7. SPECIAL EFFECTS & ANIMATIONS --- */
+.perfect-day-glow { 
+    border: 2px solid #D4AF37 !important; 
+    background: rgba(184, 134, 11, 0.08) !important; 
+    animation: pulse-warm-gold 2s infinite; 
+}
 .perfect-day-glow span { color: #E4B44A !important; text-shadow: 0 0 5px rgba(184, 134, 11, 0.5); }
 
-/* PR Shimmer (Enchanted Title) */
 .hm-pr-enchanted .hm-title-text {
     background: linear-gradient(120deg, var(--text-normal) 25%, #b19cd9 40%, #ffffff 50%, #b19cd9 60%, var(--text-normal) 75%);
     background-size: 200% auto; -webkit-background-clip: text; -webkit-text-fill-color: transparent;
     animation: enchanted-text-shimmer 4s linear infinite; font-weight: bold;
 }
-.hm-pr-enchanted .streak-active, .hm-pr-enchanted .streak-warning, .hm-pr-enchanted .ghost-streak { -webkit-text-fill-color: initial; }
 
-/* --- 8. ANIMATIONS --- */
 @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
 @keyframes pulse-warm-gold { 0%, 100% { border-color: #B8860B; } 50% { border-color: #D4AF37; box-shadow: 0 0 20px rgba(228, 180, 74, 0.4); } }
-@keyframes enchanted-text-shimmer { 0% { background-position: 200% center; } 100% { background-position: -200% center; } }
+@keyframes enchanted-text-shimmer { 0% { background-position: 200% center; } 100% { background-position: -200% center; }} 
 
-/* --- Fluid Layout --- */
-.dashboard-wrapper { 
-    display: grid; 
-    /* This automatically fits 1 or 2 columns based on available width */
-    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); 
-    gap: 15px; 
-    width: 100%; 
-}
+/* other */
 
-/* --- Responsive Heatmap --- */
-.hm-months-wrapper { 
-    display: flex; 
-    gap: 10px; 
-    margin-bottom: 10px;
-    width: 100%;
-    justify-content: center;
-    /* Allows heatmap to scroll sideways if the card is too narrow */
-    overflow-x: auto; 
-    padding-bottom: 4px;
-}
-
-/* Hide scrollbar for a cleaner look but keep functionality */
-.hm-months-wrapper::-webkit-scrollbar { display: none; }
-
-.global-xp-label span:first-child {
-    letter-spacing: 1px;
-    text-transform: uppercase;
-    font-size: 0.85em;
-    color: var(--text-accent);
+.hm-cell, 
+.hm-stat-details, 
+.streak-active, 
+.streak-warning, 
+.mastery-container, 
+.rank-container {
+    cursor: pointer !important;
 }

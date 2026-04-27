@@ -1,6 +1,5 @@
 import { moment } from "obsidian";
 
-// define configuration and data interfaces
 export interface XpConfig {
     type: "multiplier" | "threshold" | "none" | "linear";
     mul?: number;
@@ -8,19 +7,35 @@ export interface XpConfig {
     div?: number;
 }
 
-export type StatType = "habit" | "metric"; 
+export type StatType = "habit" | "metric";
 export type StreakType = "positive" | "negative" | "none";
+export type DataType = "rating" | "time" | "amount";
+
+export interface Boundaries {
+    min: number;
+    default: number;
+    max: number;
+}
+
+export interface ColorConfig {
+    type: "absolute" | "relative";
+    palette?: string[];
+    rgb?: string;
+}
 
 export interface StatConfig {
     prop: string;
     title: string;
     type: StatType;
+    dataType: DataType;
     streakType: StreakType;
     goal: "up" | "down";
     mastery: number;
     xp: XpConfig;
     unit: string;
     freq: "day" | "week";
+    boundaries: Boundaries;
+    color: ColorConfig;
 }
 
 export interface XpSettings {
@@ -68,7 +83,6 @@ export class HabitEngine {
         this.settings = xpSettings;
     }
 
-    // Static: Calculate level and progress from XP
     static getLevelData(totalXp: number, factor: number = 50): LevelData {
         const level = Math.floor(Math.sqrt(totalXp / factor));
         const xpForCurrentLevel = Math.pow(level, 2) * factor;
@@ -84,7 +98,6 @@ export class HabitEngine {
         };
     }
 
-    // Static: Calculate competitive rank
     static getRank(average: number, masteryThreshold: number): RankData | null {
         if (!masteryThreshold) return null;
         const tiers = [
@@ -106,7 +119,6 @@ export class HabitEngine {
         return { name: curr.name, cssClass: "rank-" + curr.name.toLowerCase(), progress: prog, nextRank: next ? next.name : "MAX" };
     }
 
-    // Static: Get title based on level
     static getGlobalTitle(level: number): string {
         if (level >= 100) return "Singularity";
         if (level >= 75) return "Black Hole";
@@ -118,66 +130,70 @@ export class HabitEngine {
         return "Space Dust";
     }
 
-    // check if today was a success based on streak type
     private isSuccess(value: number, streakType: StreakType): boolean {
         if (streakType === "positive") return value > 0;
         if (streakType === "negative") return value === 0;
-        return true; 
+        return true;
     }
 
-    // calculate xp based on habit type
     static getXP(value: number, config: XpConfig): number {
         if (!config || config.type === "none") return 0;
         switch (config.type) {
             case "multiplier": return value * (config.mul || 1);
-            case "threshold":  return Math.max(0, value - (config.base || 0)) * (config.mul || 1);
-            default:           return value / (config.div || 5);
+            case "threshold": return Math.max(0, value - (config.base || 0)) * (config.mul || 1);
+            default: return value / (config.div || 5);
         }
+    }
+
+    private sanitizeValue(raw: any, boundaries: Boundaries): number {
+        if (raw === undefined || raw === null) return boundaries.default;
+        const num = Number(raw);
+        if (isNaN(num)) return boundaries.default;
+        if (num < boundaries.min) return boundaries.min;
+        if (num > boundaries.max) return boundaries.max;
+        return num;
     }
 
     process(dataMap: Record<string, any>, todayStr: string): HabitStore {
         const store: HabitStore = {
             habits: {},
-            global: { 
-                xp: 0, 
-                todayXp: 0, 
-                isPerfectDay: false, 
+            global: {
+                xp: 0,
+                todayXp: 0,
+                isPerfectDay: false,
                 quest: { completed: 0, total: 0 },
                 levelData: HabitEngine.getLevelData(0, this.settings.globalFactor),
                 title: "Space Dust"
             }
         };
 
-        // init store
         this.stats.forEach(stat => {
             store.habits[stat.prop] = {
                 streak: 0, bestStreak: 0, cheatDays: 0, daysSinceMiss: 0,
                 totalXp: 0, todayXp: 0, avg90: 0, prevAvg90: 0,
-                maxRecorded: 0, currentToday: 0, lifetimeSum: 0,
+                maxRecorded: 0,
+                currentToday: stat.boundaries.default,
+                lifetimeSum: 0,
                 logs90: 0, firstLogDate: null, lifetimeAvg: 0
             };
         });
 
         const sortedDates = Object.keys(dataMap).sort();
 
-        // calculate records, xp, and streaks
         sortedDates.forEach(dateString => {
             const pageData = dataMap[dateString];
-            
             this.stats.forEach(stat => {
-                const value = pageData[stat.prop] || 0;
+                const value = this.sanitizeValue(pageData[stat.prop], stat.boundaries);
                 const habit = store.habits[stat.prop];
 
                 if (dateString === todayStr) habit.currentToday = value;
 
-                // update lifetime records
                 if (value > 0) {
                     if (!habit.firstLogDate) habit.firstLogDate = dateString;
                     habit.lifetimeSum += value;
                     if (value > habit.maxRecorded) habit.maxRecorded = value;
                 }
 
-                // update xp (only for habits)
                 if (stat.type === "habit") {
                     const xpEarned = HabitEngine.getXP(value, stat.xp);
                     habit.totalXp += xpEarned;
@@ -188,7 +204,6 @@ export class HabitEngine {
                     }
                 }
 
-                // update streaks
                 if (stat.streakType !== "none") {
                     if (this.isSuccess(value, stat.streakType)) {
                         habit.daysSinceMiss++;
@@ -226,42 +241,46 @@ export class HabitEngine {
     private calculateFinalMetrics(stat: StatConfig, store: HabitStore, dataMap: any, lookup: string[], todayStr: string) {
         const habit = store.habits[stat.prop];
         let sumCurrent90 = 0, sumPrevious90 = 0;
-        const fallback = (stat.prop === "mood") ? 4 : (stat.prop === "sleep") ? 6 : 0;
 
         for (let i = 0; i < 90; i++) {
             const dCur = lookup[i];
             const dPrev = lookup[i + 90];
             if (dCur && dPrev) {
-                const valCur = dataMap[dCur]?.[stat.prop];
-                if (valCur !== undefined && valCur > 0) habit.logs90++;
-                sumCurrent90 += valCur ?? fallback;
-                sumPrevious90 += dataMap[dPrev]?.[stat.prop] ?? fallback;
+                const rawCur = dataMap[dCur]?.[stat.prop];
+                const rawPrev = dataMap[dPrev]?.[stat.prop];
+                if (rawCur !== undefined && rawCur !== null) habit.logs90++;
+                sumCurrent90 += this.sanitizeValue(rawCur, stat.boundaries);
+                sumPrevious90 += this.sanitizeValue(rawPrev, stat.boundaries);
             }
         }
 
         habit.avg90 = sumCurrent90 / 90;
         habit.prevAvg90 = sumPrevious90 / 90;
-        habit.trend = (sumPrevious90 === 0) ? (habit.avg90 > 0 ? 100 : 0) : ((habit.avg90 - habit.prevAvg90) / sumPrevious90) * 100;
-        
+        habit.trend = (sumPrevious90 === 0)
+            ? (habit.avg90 > 0 ? 100 : 0)
+            : ((sumCurrent90 - sumPrevious90) / sumPrevious90) * 100;
+
+
         const daysLife = habit.firstLogDate ? window.moment().diff(window.moment(habit.firstLogDate), 'days') + 1 : 1;
         habit.lifetimeAvg = habit.lifetimeSum / daysLife;
 
-        // progression logic (Habit only)
         if (stat.type === "habit") {
             habit.rank = HabitEngine.getRank(habit.avg90, stat.mastery);
             habit.mastery = HabitEngine.getLevelData(habit.totalXp, this.settings.treeFactor);
         }
 
-        // status flags
         const successToday = this.isSuccess(habit.currentToday, stat.streakType);
         habit.atRisk = (stat.streakType === "positive" && !successToday && habit.streak > 0 && habit.cheatDays === 0);
         habit.isNewPR = (stat.streakType !== "none" && habit.streak > 1 && habit.streak >= habit.bestStreak);
     }
 
     private calculateGlobalQuest(store: HabitStore) {
-        const questStats = this.stats.filter(s => s.streakType !== "none");
+        const questStats = this.stats.filter(s => s.type === "habit");
+
         store.global.quest.total = questStats.length;
-        store.global.quest.completed = questStats.filter(s => this.isSuccess(store.habits[s.prop].currentToday, s.streakType)).length;
+        store.global.quest.completed = questStats.filter(s =>
+            this.isSuccess(store.habits[s.prop].currentToday, s.streakType)
+        ).length;
 
         if (store.global.quest.total > 0 && store.global.quest.completed === store.global.quest.total) {
             store.global.isPerfectDay = true;
@@ -271,4 +290,6 @@ export class HabitEngine {
         store.global.levelData = HabitEngine.getLevelData(store.global.xp, this.settings.globalFactor);
         store.global.title = HabitEngine.getGlobalTitle(store.global.levelData.level);
     }
+
+
 }

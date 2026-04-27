@@ -1,0 +1,7 @@
+{
+  "id": "habit-heatmap",
+  "name": "Habit Heatmap",
+  "author": "Yirsi",
+  "description": "Tracks habits from daily notes and displays them in heatmap style",
+  "repo": "yirsi/obsidian-habit-heatmap"
+}
