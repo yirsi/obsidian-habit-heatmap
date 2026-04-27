@@ -1,4 +1,4 @@
-import { Plugin, parseYaml, moment } from 'obsidian';
+import { Plugin, parseYaml } from 'obsidian';
 import { HabitEngine } from './engine';
 import { DashboardView } from './view';
 
@@ -11,7 +11,7 @@ export default class HabitDashboardPlugin extends Plugin {
             try {
                 config = parseYaml(source);
             } catch (e) {
-                el.createEl("pre", { text: "❌ Invalid YAML Configuration" });
+                el.createEl("pre", { text: "Invalid YAML Configuration" });
                 return;
             }
 
@@ -20,19 +20,19 @@ export default class HabitDashboardPlugin extends Plugin {
             // 2. Check Dataview Dependency
             const dv = (this.app as any).plugins.plugins["dataview"]?.api;
             if (!dv) {
-                el.createEl("h3", { text: "⚠️ Dataview plugin required" });
+                el.createEl("h3", { text: "Dataview plugin required" });
                 return;
             }
 
             try {
-                // 3. Data Collection
-                const todayStr = moment().format('YYYY-MM-DD');
+                // 3. Data Collection - Use window.moment to fix call signature error
+                const todayStr = window.moment().format('YYYY-MM-DD');
                 const dataMap: Record<string, any> = {};
 
                 dv.pages(FOLDER)
                     .where((page: any) => page.file.day)
                     .forEach((page: any) => {
-                        const date = moment(page.file.day.toJSDate()).format('YYYY-MM-DD');
+                        const date = window.moment(page.file.day.toJSDate()).format('YYYY-MM-DD');
                         dataMap[date] = page;
                     });
 
@@ -89,8 +89,10 @@ export default class HabitDashboardPlugin extends Plugin {
                 container.innerHTML = htmlOutput.join("");
 
             } catch (error) {
+                // Fix: Handle 'unknown' type error
+                const message = error instanceof Error ? error.message : String(error);
                 console.error("Habit Dashboard Error:", error);
-                el.createDiv({ text: `⚠️ Error rendering dashboard: ${error.message}` });
+                el.createDiv({ text: `Error rendering dashboard: ${message}` });
             }
         });
     }
