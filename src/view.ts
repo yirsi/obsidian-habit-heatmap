@@ -281,15 +281,18 @@ export class DashboardView {
     *  (e.g., mood is stored as 1 to 7 but gets displayed as -3 to +3) 
     */
     private formatValue(stat: StatConfig, val: number): string {
-        if (stat.dataType === "rating") {
-            const adjustedValue = val - stat.boundaries.default;
-            return `${adjustedValue >= 0 ? "+" : ""}${adjustedValue.toFixed(1)}`;
-        }
+        // frequency Scaling
+        const displayNum = stat.freq === "week" ? val * 7 : val;
 
-        const multiplier = stat.freq === "week" ? val * 7 : val;
-        return (stat.unit === "min" || stat.unit === "tasks")
-            ? `${Math.floor(multiplier)} ${stat.unit}`
-            : `${multiplier.toFixed(1)} ${stat.unit}`;
+        // precision (mins/tasks = whole numbers, others = 1 decimal)
+        const isWhole = stat.unit === "min" || stat.unit === "tasks";
+        const formatted = isWhole
+            ? Math.round(displayNum)
+            : parseFloat(displayNum.toFixed(1));
+
+        // labeling (no units for rating type)
+        if (stat.dataType === "rating") return `${formatted}`;
+        return `${formatted} ${stat.unit}`;
     }
 
 
