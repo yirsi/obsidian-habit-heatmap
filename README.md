@@ -10,13 +10,15 @@ A visual, gamified dashboard for tracking habits and life stats directly from yo
 - **Competitive Ranks**: Tiered ranking system (Iron to Diamond) based on 90-day performance.
 - **Daily Quests**: Visual progress bar for your daily habit completion.
 - **Smart Data**: Automatic sanitization and default values for missing logs.
+- **Interactive logging**: Heatmap overlay to quick edit daily note frontmatter
 
 ## Planned
-- Configuration menu instead of YAML
-- Remove Dataview dependency
-- Interactive data logging from dashboard
-- Unlock achievements for milestones
-- Submit
+- [ ] Configuration menu instead of YAML
+- [ ] Remove Dataview dependency
+- [x] Interactive data logging from dashboard
+- [ ] Unlock achievements for milestones
+- [ ] Improve plugin performance 
+- [ ] Submit plugin to official plugin list
 
 ## Prerequisites
 - **Dataview Plugin**: Must be installed and enabled.

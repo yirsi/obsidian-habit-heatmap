@@ -119,7 +119,14 @@ export class DashboardView {
     */
     private renderGlobalXP(globalData: GlobalData): string {
         const { levelData, todayXp, title, isPerfectDay } = globalData;
-        const todayPercentage = (todayXp / levelData.requiredXp) * 100;
+
+        // total progress percentage (includes today)
+        const totalPercentage = levelData.progress;
+
+        // previous progress percentage (before today's gain)
+        const prevXpInLevel = Math.max(0, levelData.currentXp - todayXp);
+        const prevPercentage = (prevXpInLevel / levelData.requiredXp) * 100;
+
         const glowClass = isPerfectDay ? 'perfect-day-glow' : '';
         const xpBonus = todayXp > 0
             ? `<span style="color:var(--text-accent)">+${Math.floor(todayXp)}</span>`
@@ -131,9 +138,11 @@ export class DashboardView {
                     <span>🌍 ${title}</span>
                     <span>Lvl ${levelData.level}</span>
                 </div>
-                <div class="xp-bar-outer" style="height:12px">
-                    <div class="xp-bar-inner" style="width:${levelData.progress}%; background:var(--text-accent)"></div>
-                    <div class="xp-bar-inner today-highlight" style="width:${todayPercentage}%"></div>
+                <div class="xp-bar-outer" style="height:12px; position: relative;">
+                    <!-- white bar (underneath, shows total width) -->
+                    <div class="xp-bar-inner today-highlight" style="width:${totalPercentage}%; position: absolute; z-index: 1;"></div>
+                    <!-- purple bar (on top, covers previous progress) -->
+                    <div class="xp-bar-inner" style="width:${prevPercentage}%; background:var(--text-accent); position: absolute; z-index: 2;"></div>
                 </div>
                 <div class="xp-label" style="margin-top:5px;font-size:0.8em;opacity:0.8">
                     <span>${levelData.currentXp}/${levelData.requiredXp} XP</span>
@@ -152,17 +161,68 @@ export class DashboardView {
     private renderCard(stat: StatConfig, habit: HabitData, dataMap: any): string {
         if (!habit) return `<div class="hm-card">No data: ${stat.prop}</div>`;
 
-        // determine if border should light up based on success conditions
         const isPositive = stat.streakType === "positive";
         const isDone = isPositive ? habit.currentToday > 0 : habit.currentToday === 0;
         const cardClass = `hm-card ${isPositive && isDone ? 'hm-card-done' : ''} ${habit.isNewPR ? 'hm-pr-enchanted' : ''}`;
 
         return `
-            <div class="${cardClass}">
+            <div class="${cardClass}" data-prop="${stat.prop}">
                 ${this.renderBadges(stat, habit)}
                 <h3><span class="hm-title-text">${stat.title}</span></h3>
                 ${this.renderHeatmap(stat, habit, dataMap)}
                 ${this.renderFooter(stat, habit)}
+                
+                <!-- interactive logging overlay and trigger -->
+                <div class="hm-log-trigger" title="Log today">+</div>
+                ${this.renderLogOverlay(stat, habit.currentToday)}
+            </div>
+        `;
+    }
+
+
+    /*
+    *  generate interactive overlay with input based on datatypes and boundaries
+    *  enables editing of current daily note (today) through the dashboard
+    */
+    private renderLogOverlay(stat: StatConfig, currentVal: number): string {
+        let uiHtml = "";
+        const isRating = stat.dataType === "rating";
+
+        if (isRating) {
+            let buttons = "";
+            for (let i = stat.boundaries.min; i <= stat.boundaries.max; i++) {
+                buttons += `<button class="hm-log-btn rating-btn" data-val="${i}">${i}</button>`;
+            }
+            uiHtml = `<div class="hm-log-strip">${buttons}</div>`;
+        } else {
+            const isMacro = stat.dataType === "time" && stat.boundaries.max > 24;
+            const min = stat.boundaries.min;
+            const max = stat.boundaries.max;
+
+            // helper to check if a step would exceed boundaries
+            const isDisabled = (step: number) => (currentVal + step < min || currentVal + step > max) ? "disabled" : "";
+
+            const stepperBtns = isMacro
+                ? `<button class="hm-log-btn step-btn" data-step="-30" ${isDisabled(-30)}>-30</button>
+                   <button class="hm-log-btn step-btn" data-step="-10" ${isDisabled(-10)}>-10</button>
+                   <div class="hm-log-value">${currentVal}</div>
+                   <button class="hm-log-btn step-btn" data-step="10" ${isDisabled(10)}>+10</button>
+                   <button class="hm-log-btn step-btn" data-step="30" ${isDisabled(30)}>+30</button>`
+                : `<button class="hm-log-btn step-btn" data-step="-1" ${isDisabled(-1)}>-1</button>
+                   <div class="hm-log-value">${currentVal}</div>
+                   <button class="hm-log-btn step-btn" data-step="1" ${isDisabled(1)}>+1</button>`;
+
+            uiHtml = `<div class="hm-log-stepper">${stepperBtns}</div>`;
+        }
+
+        const saveClass = isRating ? "hm-log-save rating-save" : "hm-log-save stepper-save";
+
+        return `
+            <div class="hm-log-overlay" data-min="${stat.boundaries.min}" data-max="${stat.boundaries.max}">
+                <div class="hm-log-header">${stat.title}</div>
+                ${uiHtml}
+                <div class="hm-log-reset" data-val="${stat.boundaries.default}" title="Reset to default">↺</div>
+                <div class="${saveClass}" title="Confirm">✓</div>
             </div>
         `;
     }
@@ -201,7 +261,6 @@ export class DashboardView {
     *  also builds tooltips with extra data summary (e.g., previous 90-days performance average)
     */
     private renderFooter(stat: StatConfig, habit: HabitData): string {
-        // determine trend colors
         const goal = stat.goal || "up";
         const trendIsGood = goal === "up" ? habit.trend > 0 : habit.trend < 0;
         const trendClass = habit.trend !== 0 ? (trendIsGood ? 'trend-good' : 'trend-bad') : '';
@@ -214,8 +273,6 @@ export class DashboardView {
             Consistency: ${habit.logs90}/90 days
         `;
 
-        // streak icon and tooltip
-        // use diff streak icon for normal streaks, new PR streaks and streaks that will end if not completed today
         const streakIcon = habit.atRisk ? "⚠️" : (habit.isNewPR ? "🌟" : "🔥");
         const streakTooltip = `All-time best: ${habit.bestStreak}`;
         const streakHtml = habit.streak > 0
@@ -245,14 +302,12 @@ export class DashboardView {
             const daysInMonth = monthContext.daysInMonth();
             const offset = (monthContext.startOf('month').day() + 6) % 7;
 
-            // map visible and hidden cells
             const cellsHtml = [
                 ...Array(offset).fill('<div class="hm-cell hm-hidden"></div>'),
                 ...Array.from({ length: daysInMonth }, (_, d) => {
                     const dateStr = monthContext.date(d + 1).format('YYYY-MM-DD');
                     const raw = dataMap[dateStr]?.[stat.prop];
 
-                    // conditionally sanitize to preserve undefined status for missing files
                     const val = (raw !== undefined && raw !== null)
                         ? this.sanitize(raw, stat.boundaries)
                         : undefined;
@@ -281,16 +336,10 @@ export class DashboardView {
     *  (e.g., mood is stored as 1 to 7 but gets displayed as -3 to +3) 
     */
     private formatValue(stat: StatConfig, val: number): string {
-        // frequency Scaling
-        const displayNum = stat.freq === "week" ? val * 7 : val;
-
-        // precision (mins/tasks = whole numbers, others = 1 decimal)
+        const displayNum = stat.freq === "week" && stat.dataType !== "rating" ? val * 7 : val;
         const isWhole = stat.unit === "min" || stat.unit === "tasks";
-        const formatted = isWhole
-            ? Math.round(displayNum)
-            : parseFloat(displayNum.toFixed(1));
+        const formatted = isWhole ? Math.round(displayNum) : parseFloat(displayNum.toFixed(1));
 
-        // labeling (no units for rating type)
         if (stat.dataType === "rating") return `${formatted}`;
         return `${formatted} ${stat.unit}`;
     }
@@ -308,38 +357,29 @@ export class DashboardView {
         colorConfig: ColorConfig,
         boundaries: Boundaries
     ): string {
-        // handle empty or strictly zero states
         if (value === undefined || value === null || (value <= 0 && boundaries.min === 0)) {
             return `var(--background-modifier-hover)`;
         }
 
-        // fallback for missing color config
         if (!colorConfig) return `rgba(128, 128, 128, 0.5)`;
 
-        // resolve absolute 3-color gradients
         if (colorConfig.type === "absolute") {
             const palette = colorConfig.palette || colorConfig.colors || ["#ff2222", "#eeee44", "#33ff44"];
-            // using default as the baseline pivot
             const mid = boundaries.default;
             const isLow = value <= mid;
-            // percentage relative to the pivot point (mid)
             const percentage = Math.min(1, isLow
                 ? (value - boundaries.min) / (mid - boundaries.min || 1)
                 : (value - mid) / (boundaries.max - mid || 1));
 
-            // safely extract hex to rgb arrays
             const extractRgb = (hex: string): [number, number, number] => {
                 const clean = hex.replace('#', '');
-                const match = clean.length === 3
-                    ? clean.split('').map(c => c + c)
-                    : clean.match(/.{1,2}/g);
+                const match = clean.length === 3 ? clean.split('').map(c => c + c) : clean.match(/.{1,2}/g);
                 const parts = match ? match.map(x => parseInt(x, 16)) : [];
                 return [parts[0] ?? 128, parts[1] ?? 128, parts[2] ?? 128];
             };
 
             const rgbColors = palette.map(extractRgb);
 
-            // guarantee 3 distinct colors by assigning fallbacks
             const c0 = rgbColors[0] ?? [255, 34, 34];
             const c1 = rgbColors[1] ?? [238, 238, 68];
             const c2 = rgbColors[2] ?? [51, 255, 68];
@@ -347,7 +387,6 @@ export class DashboardView {
             const [sr, sg, sb] = isLow ? c0 : c1;
             const [er, eg, eb] = isLow ? c1 : c2;
 
-            // interpolate rgb
             const r = Math.floor(sr + (er - sr) * percentage);
             const g = Math.floor(sg + (eg - sg) * percentage);
             const b = Math.floor(sb + (eb - sb) * percentage);
@@ -355,7 +394,6 @@ export class DashboardView {
             return `rgb(${r}, ${g}, ${b})`;
         }
 
-        // process relative opacity based on all-time max
         const denominator = maxRecorded > 0 ? maxRecorded : 1;
         return `rgba(${colorConfig.rgb || "128, 128, 128"}, ${Math.max(0.2, Math.min(value / denominator, 1))})`;
     }
