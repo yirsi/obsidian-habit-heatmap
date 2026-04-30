@@ -13,11 +13,12 @@ A visual, gamified dashboard for tracking habits and life stats directly from yo
 - **Interactive logging**: Heatmap overlay to quick edit daily note frontmatter
 
 ## Planned
-- [ ] Configuration menu instead of YAML
+- [x] Configuration menu instead of YAML
 - [ ] Remove Dataview dependency
 - [x] Interactive data logging from dashboard
 - [ ] Unlock achievements for milestones
 - [ ] Improve plugin performance 
+- [ ] Refractor messy classes (esp view.ts) 
 - [ ] Submit plugin to official plugin list
 
 ## Prerequisites
@@ -29,11 +30,16 @@ A visual, gamified dashboard for tracking habits and life stats directly from yo
 3. Enable the plugin in Obsidian settings.
 
 ## Usage
-Insert this code block into any note. 
-
-### Dashboard Example
-````yaml
+Change YAML in settings menu.
+Use the plugin view via the left sidebar flame ribbon icon
+Alternatively you can add the following codeblock to your markdown to also summon the view
+````
 ```habit-heatmap
+```
+````
+
+### Settings Example
+```yaml
 FOLDER: '"100 Journal"'
 XP_SETTINGS: { globalFactor: 30, treeFactor: 50 }
 
@@ -42,7 +48,6 @@ STATS:
   - { prop: "exercise", type: "habit", dataType: "time", title: "🏋️ Exercise", streakType: "positive", unit: "min", freq: "day", boundaries: { min: 0, default: 0, max: 1440 }, mastery: 60, xp: { type: "linear", div: 1 }, color: { type: "relative", rgb: "255, 140, 0" } }
   - { prop: "cannabis", type: "metric", dataType: "amount", title: "🌿 Cannabis", streakType: "negative", goal: "down", unit: "use", freq: "week", boundaries: { min: 0, default: 0, max: 99 }, color: { type: "relative", rgb: "107, 142, 35" } }
 ```
-````
 
 ### Daily Note Example 
 The plugin reads from the frontmatter of your daily notes:
