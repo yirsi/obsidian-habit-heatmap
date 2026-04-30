@@ -1,75 +1,6 @@
-import { moment } from "obsidian";
+import { StatConfig, HabitData, GlobalData, Boundaries, ColorConfig, HabitStore, HeatmapCell } from './types';
 
-type Boundaries = {
-    min: number;
-    default: number;
-    max: number;
-};
-
-type ColorConfig = {
-    type: "absolute" | "relative";
-    palette?: string[];
-    colors?: string[];
-    rgb?: string;
-};
-
-type StatConfig = {
-    prop: string;
-    title: string;
-    type: string;
-    dataType: string;
-    streakType: string;
-    goal: string;
-    unit: string;
-    freq: string;
-    boundaries: Boundaries;
-    color: ColorConfig;
-};
-
-type HabitData = {
-    maxRecorded: number;
-    currentToday: number;
-    avg90: number;
-    prevAvg90: number;
-    lifetimeAvg: number;
-    logs90: number;
-    streak: number;
-    bestStreak: number;
-    atRisk: boolean;
-    isNewPR: boolean;
-    trend: number;
-    mastery?: {
-        level: number;
-        totalXp: number;
-        currentXp: number;
-        requiredXp: number;
-        progress: number;
-    };
-    rank?: {
-        name: string;
-        cssClass: string;
-        progress: number;
-        nextRank: string;
-    };
-};
-
-type GlobalData = {
-    quest: {
-        completed: number;
-        total: number;
-    };
-    levelData: {
-        level: number;
-        progress: number;
-        currentXp: number;
-        requiredXp: number;
-    };
-    todayXp: number;
-    title: string;
-    isPerfectDay: boolean;
-};
-
-export class DashboardView {
+export class DashboardRenderer {
     // init view
     constructor() { }
 
@@ -77,12 +8,16 @@ export class DashboardView {
     *  coordinates assembly of UI by calling component methods
     *  outputs an html string, which is ready to be rendered
     */
-    renderDashboard(store: any, stats: StatConfig[], dataMap: any): string {
+    renderDashboard(store: HabitStore, stats: StatConfig[]): string {
+        const questHtml = this.renderQuestBar(store.global);
+        const globalXpHtml = this.renderGlobalXP(store.global);
+        const cardsHtml = stats.map(stat => this.renderCard(stat, store.habits[stat.prop])).join("");
+
         return `
-            ${this.renderQuestBar(store.global)}
-            ${this.renderGlobalXP(store.global)}
+            ${questHtml}
+            ${globalXpHtml}
             <div class="dashboard-wrapper">
-                ${stats.map(stat => this.renderCard(stat, store.habits[stat.prop], dataMap)).join("")}
+                ${cardsHtml}
             </div>
         `;
     }
@@ -97,14 +32,17 @@ export class DashboardView {
             ? (globalData.quest.completed / globalData.quest.total) * 100
             : 0;
 
+        const progressLabel = `${globalData.quest.completed}/${globalData.quest.total}`;
+        const barStyle = `width:${completionPercentage}%`;
+
         return `
             <div class="quest-container">
                 <div class="quest-label">
                     <span>🎯 DAILY QUEST</span>
-                    <span>${globalData.quest.completed}/${globalData.quest.total}</span>
+                    <span>${progressLabel}</span>
                 </div>
                 <div class="quest-bar-outer">
-                    <div class="quest-bar-inner" style="width:${completionPercentage}%"></div>
+                    <div class="quest-bar-inner" style="${barStyle}"></div>
                 </div>
             </div>
         `;
@@ -128,9 +66,13 @@ export class DashboardView {
         const prevPercentage = (prevXpInLevel / levelData.requiredXp) * 100;
 
         const glowClass = isPerfectDay ? 'perfect-day-glow' : '';
-        const xpBonus = todayXp > 0
-            ? `<span style="color:var(--text-accent)">+${Math.floor(todayXp)}</span>`
+        const xpBonusHtml = todayXp > 0 
+            ? `<span style="color:var(--text-accent)">+${Math.floor(todayXp)}</span>` 
             : '';
+            
+        const xpText = `${levelData.currentXp}/${levelData.requiredXp} XP`;
+        const totalStyle = `width:${totalPercentage}%; position: absolute; z-index: 1;`;
+        const prevStyle = `width:${prevPercentage}%; background:var(--text-accent); position: absolute; z-index: 2;`;
 
         return `
             <div class="global-xp-wrapper ${glowClass}">
@@ -140,13 +82,13 @@ export class DashboardView {
                 </div>
                 <div class="xp-bar-outer" style="height:12px; position: relative;">
                     <!-- white bar (underneath, shows total width) -->
-                    <div class="xp-bar-inner today-highlight" style="width:${totalPercentage}%; position: absolute; z-index: 1;"></div>
+                    <div class="xp-bar-inner today-highlight" style="${totalStyle}"></div>
                     <!-- purple bar (on top, covers previous progress) -->
-                    <div class="xp-bar-inner" style="width:${prevPercentage}%; background:var(--text-accent); position: absolute; z-index: 2;"></div>
+                    <div class="xp-bar-inner" style="${prevStyle}"></div>
                 </div>
                 <div class="xp-label" style="margin-top:5px;font-size:0.8em;opacity:0.8">
-                    <span>${levelData.currentXp}/${levelData.requiredXp} XP</span>
-                    ${xpBonus}
+                    <span>${xpText}</span>
+                    ${xpBonusHtml}
                 </div>
             </div>
         `;
@@ -158,23 +100,31 @@ export class DashboardView {
     *  checks if good habit is done (or bad habit is avoided)
     *  gives colored border to card container on habit success
     */
-    private renderCard(stat: StatConfig, habit: HabitData, dataMap: any): string {
+    private renderCard(stat: StatConfig, habit: HabitData | undefined): string {
         if (!habit) return `<div class="hm-card">No data: ${stat.prop}</div>`;
 
         const isPositive = stat.streakType === "positive";
         const isDone = isPositive ? habit.currentToday > 0 : habit.currentToday === 0;
-        const cardClass = `hm-card ${isPositive && isDone ? 'hm-card-done' : ''} ${habit.isNewPR ? 'hm-pr-enchanted' : ''}`;
+        
+        const statusClass = (isPositive && isDone) ? 'hm-card-done' : '';
+        const prClass = habit.isNewPR ? 'hm-pr-enchanted' : '';
+        const cardClass = `hm-card ${statusClass} ${prClass}`;
+
+        const badgesHtml = this.renderBadges(stat, habit);
+        const heatmapHtml = this.renderHeatmap(stat, habit);
+        const footerHtml = this.renderFooter(stat, habit);
+        const overlayHtml = this.renderLogOverlay(stat, habit.currentToday);
 
         return `
             <div class="${cardClass}" data-prop="${stat.prop}">
-                ${this.renderBadges(stat, habit)}
+                ${badgesHtml}
                 <h3><span class="hm-title-text">${stat.title}</span></h3>
-                ${this.renderHeatmap(stat, habit, dataMap)}
-                ${this.renderFooter(stat, habit)}
+                ${heatmapHtml}
+                ${footerHtml}
                 
                 <!-- interactive logging overlay and trigger -->
                 <div class="hm-log-trigger" title="Log today">+</div>
-                ${this.renderLogOverlay(stat, habit.currentToday)}
+                ${overlayHtml}
             </div>
         `;
     }
@@ -236,22 +186,26 @@ export class DashboardView {
         if (stat.type !== "habit" || !habit.mastery) return "";
 
         const masteryTooltip = `Level ${habit.mastery.level}\nLifetime XP: ${habit.mastery.totalXp}\nProgress: ${habit.mastery.currentXp}/${habit.mastery.requiredXp} XP`;
-        const rankTooltip = habit.rank
-            ? `${habit.rank.name} Rank\n${habit.rank.progress}% toward ${habit.rank.nextRank}`
-            : "";
+        const progressStyle = `width:${habit.mastery.progress}%`;
+        
+        let rankHtml = "";
+        if (habit.rank) {
+            const rankTooltip = `${habit.rank.name} Rank\n${habit.rank.progress}% toward ${habit.rank.nextRank}`;
+            rankHtml = `
+                <div class="rank-container" title="${rankTooltip}">
+                    <div class="rank-badge ${habit.rank.cssClass}">${habit.rank.name}</div>
+                </div>
+            `;
+        }
 
         return `
             <div class="mastery-container" title="${masteryTooltip}">
                 <div class="mastery-badge">Lvl ${habit.mastery.level}</div>
                 <div class="rank-progress-outer">
-                    <div class="rank-progress-inner" style="width:${habit.mastery.progress}%"></div>
+                    <div class="rank-progress-inner" style="${progressStyle}"></div>
                 </div>
             </div>
-            ${habit.rank ? `
-                <div class="rank-container" title="${rankTooltip}">
-                    <div class="rank-badge ${habit.rank.cssClass}">${habit.rank.name}</div>
-                </div>
-            ` : ''}
+            ${rankHtml}
         `;
     }
 
@@ -266,24 +220,34 @@ export class DashboardView {
         const trendClass = habit.trend !== 0 ? (trendIsGood ? 'trend-good' : 'trend-bad') : '';
         const freqSuffix = stat.dataType === "rating" ? "" : ` / ${stat.freq}`;
 
+        const currentValStr = this.formatValue(stat, habit.avg90);
+        const prevValStr = this.formatValue(stat, habit.prevAvg90);
+        const lifetimeValStr = this.formatValue(stat, habit.lifetimeAvg);
+
         const statsTooltip = `
-            Current: ${this.formatValue(stat, habit.avg90)}
-            Previous: ${this.formatValue(stat, habit.prevAvg90)}
-            Lifetime: ${this.formatValue(stat, habit.lifetimeAvg)}
+            Current: ${currentValStr}
+            Previous: ${prevValStr}
+            Lifetime: ${lifetimeValStr}
             Consistency: ${habit.logs90}/90 days
         `;
 
         const streakIcon = habit.atRisk ? "⚠️" : (habit.isNewPR ? "🌟" : "🔥");
         const streakTooltip = `All-time best: ${habit.bestStreak}`;
-        const streakHtml = habit.streak > 0
-            ? ` | <span class="${habit.atRisk ? 'streak-warning' : 'streak-active'}" title="${streakTooltip}">${streakIcon} ${habit.streak}</span>`
-            : "";
+        
+        let streakHtml = "";
+        if (habit.streak > 0) {
+            const streakClass = habit.atRisk ? 'streak-warning' : 'streak-active';
+            streakHtml = ` | <span class="${streakClass}" title="${streakTooltip}">${streakIcon} ${habit.streak}</span>`;
+        }
+
+        const trendSign = habit.trend > 0 ? "+" : "";
+        const trendText = `${trendSign}${habit.trend.toFixed(0)}%`;
 
         return `
             <div class="hm-footer">
                 <span title="${statsTooltip.trim()}" class="hm-stat-details" style="cursor: help;">
-                    ${this.formatValue(stat, habit.avg90)}${freqSuffix} |
-                    <span class="${trendClass}">${habit.trend > 0 ? "+" : ""}${habit.trend.toFixed(0)}%</span>
+                    ${currentValStr}${freqSuffix} |
+                    <span class="${trendClass}">${trendText}</span>
                 </span>
                 ${streakHtml}
             </div>
@@ -296,33 +260,26 @@ export class DashboardView {
     *  maps data from daily notes to cells of heatmap
     *  outlines current day 
     */
-    private renderHeatmap(stat: StatConfig, habitData: HabitData, dataMap: any): string {
-        const monthsHtml = Array.from({ length: 3 }, (_, i) => {
-            const monthContext = window.moment().subtract(2 - i, 'months');
-            const daysInMonth = monthContext.daysInMonth();
-            const offset = (monthContext.startOf('month').day() + 6) % 7;
+    private renderHeatmap(stat: StatConfig, habitData: HabitData): string {
+        const monthsHtml = habitData.heatmap.map((month: HeatmapCell[]) => {
+            const cellsHtml = month.map((cell: HeatmapCell) => {
+                // inject invisible padding cells to align dates with weekdays
+                if (cell.isHidden) {
+                    return `<div class="hm-cell hm-hidden"></div>`;
+                }
 
-            const cellsHtml = [
-                ...Array(offset).fill('<div class="hm-cell hm-hidden"></div>'),
-                ...Array.from({ length: daysInMonth }, (_, d) => {
-                    const dateStr = monthContext.date(d + 1).format('YYYY-MM-DD');
-                    const raw = dataMap[dateStr]?.[stat.prop];
+                const color = this.renderCellColor(cell.value, habitData.maxRecorded, stat.color, stat.boundaries);
+                const isTodayClass = cell.isToday ? 'hm-today' : '';
+                const titleText = `${cell.date}: ${cell.value !== null ? cell.value : 'No data'}`;
+                const cellStyle = `background-color: ${color}`;
 
-                    const val = (raw !== undefined && raw !== null)
-                        ? this.sanitize(raw, stat.boundaries)
-                        : undefined;
-
-                    const color = this.renderCellColor(val, habitData.maxRecorded, stat.color, stat.boundaries);
-                    const isToday = dateStr === window.moment().format('YYYY-MM-DD');
-
-                    return `
-                        <div class="hm-cell ${isToday ? 'hm-today' : ''}"
-                             style="background-color: ${color}"
-                             title="${dateStr}: ${raw ?? 'No data'}">
-                        </div>
-                    `;
-                })
-            ].join("");
+                return `
+                    <div class="hm-cell ${isTodayClass}"
+                         style="${cellStyle}"
+                         title="${titleText}">
+                    </div>
+                `;
+            }).join("");
 
             return `<div class="hm-month">${cellsHtml}</div>`;
         }).join("");
@@ -352,7 +309,7 @@ export class DashboardView {
     *  or relative color pallete (1 color with variying opacity)
     */
     private renderCellColor(
-        value: number | undefined,
+        value: number | null,
         maxRecorded: number,
         colorConfig: ColorConfig,
         boundaries: Boundaries
@@ -398,14 +355,4 @@ export class DashboardView {
         return `rgba(${colorConfig.rgb || "128, 128, 128"}, ${Math.max(0.2, Math.min(value / denominator, 1))})`;
     }
 
-    /*
-    *  safely parse data, apply default and enforce boundaries
-    *  ensure data is valid number before reaching logic engine
-    */
-    private sanitize(value: any, boundaries: Boundaries): number {
-        const numericValue = Number(value);
-        return (isNaN(numericValue) || value === undefined || value === null)
-            ? boundaries.default
-            : Math.min(Math.max(numericValue, boundaries.min), boundaries.max);
-    }
 }

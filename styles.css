@@ -1,10 +1,13 @@
 /* --- 1. LAYOUT & GRID --- */
 .dashboard-wrapper {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    /* Added min(100%, ...) so it shrinks on mobile devices instead of overflowing */
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, 300px), 1fr));
     gap: 15px;
     width: 100%;
-    margin-top: 20px;
+    /* Set to 1300px to cap at 4 columns max (4x300px + gaps) and centered */
+    max-width: 1300px;
+    margin: 20px auto 0 auto;
 }
 
 /* --- 2. HABIT CARDS --- */
@@ -20,6 +23,8 @@
     overflow: visible;
     transition: all 0.2s ease;
     gap: 8px;
+    /* Added to ensure padding doesn't push the card wider than the screen on mobile */
+    box-sizing: border-box; 
 }
 
 .hm-card-done {
@@ -105,6 +110,7 @@
     gap: 10px;
     margin-bottom: 10px;
     width: 100%;
+    max-width: 100%;
     justify-content: center;
     overflow-x: auto;
     padding-bottom: 4px;
@@ -134,11 +140,13 @@
 
 /* --- 6. PROGRESS BARS (Global & Quest) --- */
 .quest-container { 
-    margin-bottom: 15px; 
     background: rgba(var(--text-accent-rgb), 0.05); 
     padding: 10px; 
     border-radius: 8px; 
     border: 1px dashed var(--text-faint); 
+    max-width: 1300px; 
+    margin: 0 auto 15px auto;
+    box-sizing: border-box;
 }
 .quest-label, .global-xp-label, .xp-label { 
     display: flex; 
@@ -165,7 +173,10 @@
     padding: 12px; 
     border: 1px solid var(--text-accent); 
     text-align: center; 
-    margin-bottom: 20px; 
+    /* Match the grid's max-width and center it */
+    max-width: 1300px;
+    margin: 0 auto 20px auto; 
+    box-sizing: border-box;
 }
 .global-xp-label { font-size: 0.9em; margin-bottom: 8px; }
 .global-xp-label span:first-child { 
@@ -357,8 +368,6 @@
     text-align: center; 
 }
 
-
-
 /* Target custom view container */
 .habit-dashboard-main-view {
     padding: 20px !important;
@@ -370,12 +379,37 @@
 /* Force the internal dashboard wrapper to be wide */
 .habit-dashboard-main-view .dashboard-wrapper {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, 300px), 1fr));
     gap: 20px;
-    max-width: 100% !important;
+    max-width: 1300px !important;
     margin: 0 auto;
 }
 
 .workspace-leaf-content[data-type="habit-dashboard-view"] .view-content {
     padding: 0;
+}
+
+/* --- 9. SETTINGS UI --- */
+
+/* Force the setting item to stack label above the input */
+.habit-settings-area {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+}
+
+/* Make the control container take up 100% width */
+.habit-settings-area .setting-item-control {
+    width: 100%;
+}
+
+/* Make the actual text area large and monospaced */
+.habit-settings-area textarea {
+    width: 100%;
+    height: 500px;
+    font-family: var(--font-monospace);
+    font-size: 0.9em;
+    padding: 10px;
+    border-radius: 4px;
+    border: 1px solid var(--background-modifier-border);
 }

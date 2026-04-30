@@ -16,26 +16,27 @@ export class HabitDashboardSettingTab extends PluginSettingTab {
 
         containerEl.createEl('h2', { text: 'Habit Dashboard Settings' });
 
-        new Setting(containerEl)
-            .setName('Dashboard Configuration')
-            .setDesc('Paste your YAML configuration here. This will be used for the Main View and empty code blocks.')
-            .addTextArea(text => text
-                .setPlaceholder('FOLDER: "..." \nSTATS: ...')
-                .setValue(this.plugin.settings.yamlConfig)
-                .onChange(async (value) => {
-                    try {
-                        const parsed = parseYaml(value);
-                        if (parsed) {
-                            this.plugin.settings.yamlConfig = value;
-                            this.plugin.settings.parsedConfig = parsed;
-                            await this.plugin.saveSettings();
-                        }
-                    } catch (e) {
-                        // Optional: Show a visual hint that YAML is currently invalid
-                    }
-                }));
-        
-        // Add a helper note
+new Setting(containerEl)
+    .setName('Dashboard Configuration')
+    .setDesc('Paste your YAML configuration here.')
+    .setClass('habit-settings-area')
+    .addTextArea(text => text
+        .setPlaceholder('FOLDER: "..." \nSTATS: ...')
+        .setValue(this.plugin.settings.yamlConfig)
+        .onChange(async (value) => {
+            try {
+                const parsed = parseYaml(value);
+                if (parsed) {
+                    this.plugin.settings.yamlConfig = value;
+                    this.plugin.settings.parsedConfig = parsed;
+                    await this.plugin.saveSettings();
+                }
+            } catch (e) {
+            // wait for yaml
+            }
+        }));
+
+        // add a helper note
         containerEl.createEl('p', { 
             text: 'Note: Changes will take effect the next time the Dashboard is opened or refreshed.',
             cls: 'setting-item-description'

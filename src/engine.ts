@@ -1,100 +1,7 @@
-export interface XpConfig {
-    type: "multiplier" | "threshold" | "none" | "linear";
-    mul?: number;
-    base?: number;
-    div?: number;
-}
-
-export type StatType = "habit" | "metric";
-export type StreakType = "positive" | "negative" | "none";
-export type DataType = "rating" | "time" | "amount";
-
-export interface Boundaries {
-    min: number;
-    default: number;
-    max: number;
-}
-
-export interface ColorConfig {
-    type: "absolute" | "relative";
-    palette?: string[];
-    rgb?: string;
-}
-
-export interface StatConfig {
-    prop: string;
-    title: string;
-    type: StatType;
-    dataType: DataType;
-    streakType: StreakType;
-    goal: "up" | "down";
-    mastery: number;
-    xp: XpConfig;
-    unit: string;
-    freq: "day" | "week";
-    boundaries: Boundaries;
-    color: ColorConfig;
-}
-
-export interface XpSettings {
-    globalFactor: number;
-    treeFactor: number;
-    taskMultiplier: number;
-    minutesPerXp: number;
-    sleepBaseHours: number;
-    sleepXpMultiplier: number;
-}
-
-export interface LevelData {
-    level: number;
-    progress: number;
-    totalXp: number;
-    currentXp: number;
-    requiredXp: number;
-}
-
-export interface RankData {
-    name: string;
-    cssClass: string;
-    progress: number;
-    nextRank: string;
-}
-
-// internal state tracking for a single habit
-export interface HabitData {
-    streak: number;
-    bestStreak: number;
-    cheatDays: number;
-    daysSinceMiss: number;
-    totalXp: number;
-    todayXp: number;
-    avg90: number;
-    prevAvg90: number;
-    maxRecorded: number;
-    currentToday: number;
-    lifetimeSum: number;
-    logs90: number;
-    firstLogDate: string | null;
-    lifetimeAvg: number;
-    rank?: RankData | null;
-    mastery?: LevelData;
-    atRisk?: boolean;
-    isNewPR?: boolean;
-    trend?: number;
-}
-
-// final payload passed to the view
-export interface HabitStore {
-    habits: Record<string, HabitData>;
-    global: {
-        xp: number;
-        todayXp: number;
-        isPerfectDay: boolean;
-        quest: { completed: number; total: number };
-        levelData: LevelData;
-        title: string;
-    };
-}
+import {
+    StatConfig, XpSettings, LevelData, RankData,
+    HabitData, HabitStore, StreakType, XpConfig, Boundaries, HeatmapCell
+} from './types';
 
 export class HabitEngine {
     stats: StatConfig[];
@@ -103,7 +10,7 @@ export class HabitEngine {
     /*
     *  init constructor  
     *  takes STATS and XP_SETTINGS aray and saves them to class instance
-    */ 
+    */
     constructor(statsConfig: StatConfig[], xpSettings: XpSettings) {
         this.stats = statsConfig;
         this.settings = xpSettings;
@@ -114,7 +21,7 @@ export class HabitEngine {
     *  calculate xp threshold needed for levels
     *  returns calculated values
     *  example of how displayed in view: "Level 17 (80% to Level 18)"
-    */  
+    */
     static getLevelData(totalXp: number, factor: number = 50): LevelData {
         const level = Math.floor(Math.sqrt(totalXp / factor));
         const xpForCurrentLevel = Math.pow(level, 2) * factor;
@@ -135,7 +42,7 @@ export class HabitEngine {
     *  assign rank tier based on average performance
     *  masteryThreshold is 90-day average needed for diamond rank
     *  also calculates how close to rank-up
-    */  
+    */
     static getRank(average: number, masteryThreshold: number): RankData | null {
         if (!masteryThreshold) return null;
 
@@ -170,17 +77,17 @@ export class HabitEngine {
     static getGlobalTitle(level: number): string {
         switch (true) {
             case level >= 100: return "Singularity";
-            case level >= 90:  return "Cosmic Entity";
-            case level >= 80:  return "Event Horizon";
-            case level >= 70:  return "Void Walker";
-            case level >= 60:  return "Galactic Guardian";
-            case level >= 50:  return "Supernova Soul";
-            case level >= 40:  return "Star Surfer";
-            case level >= 30:  return "Comet Chaser";
-            case level >= 20:  return "Planetary Pioneer";
-            case level >= 10:  return "Moon Wanderer";
-            case level >= 5:   return "Asteroid Rider";
-            default:           return "Space Debris";
+            case level >= 90: return "Cosmic Entity";
+            case level >= 80: return "Event Horizon";
+            case level >= 70: return "Void Walker";
+            case level >= 60: return "Galactic Guardian";
+            case level >= 50: return "Supernova Soul";
+            case level >= 40: return "Star Surfer";
+            case level >= 30: return "Comet Chaser";
+            case level >= 20: return "Planetary Pioneer";
+            case level >= 10: return "Moon Wanderer";
+            case level >= 5: return "Asteroid Rider";
+            default: return "Space Debris";
         }
     }
 
@@ -205,7 +112,7 @@ export class HabitEngine {
     *  sanitize raw input against configured boundaries and fallbacks
     *  if input is bad replace with default value
     *  clamp input between min/max boundaries
-    */ 
+    */
     private sanitizeValue(raw: any, boundaries: Boundaries): number {
         if (raw === undefined || raw === null) return boundaries.default;
         const num = Number(raw);
@@ -221,7 +128,7 @@ export class HabitEngine {
     *  handle streak increments
     *  4 day streaks grant 1 cheat day
     *  negative habits get no cheat day
-    */ 
+    */
     private updateStreak(habit: HabitData, isSuccess: boolean, isToday: boolean, streakType: StreakType) {
         if (isSuccess) {
             habit.daysSinceMiss++;
@@ -272,7 +179,8 @@ export class HabitEngine {
                 streak: 0, bestStreak: 0, cheatDays: 0, daysSinceMiss: 0,
                 totalXp: 0, todayXp: 0, avg90: 0, prevAvg90: 0,
                 maxRecorded: 0, currentToday: stat.boundaries.default,
-                lifetimeSum: 0, logs90: 0, firstLogDate: null, lifetimeAvg: 0
+                lifetimeSum: 0, logs90: 0, firstLogDate: null, lifetimeAvg: 0,
+                atRisk: false, isNewPR: false, trend: 0, heatmap: []
             };
         });
 
@@ -318,9 +226,17 @@ export class HabitEngine {
             });
         });
 
-        // resolve rolling averages and final ui flags
+        // resolve rolling averages, heatmaps, and final ui flags
         const dateLookup = this.generateDateLookup(todayStr);
-        this.stats.forEach(stat => this.calculateFinalMetrics(stat, store, dataMap, dateLookup, todayStr));
+        this.stats.forEach(stat => {
+            const habit = store.habits[stat.prop];
+            if (habit) {
+                this.calculateFinalMetrics(stat, store, dataMap, dateLookup, todayStr);
+                // pre-calculates the layout matrix for the view's heatmap (months, offsets, and data)
+                habit.heatmap = this.generateHeatmapMatrix(stat, dataMap, todayStr);
+            }
+        });
+
         this.calculateGlobalQuest(store);
 
         return store;
@@ -329,7 +245,7 @@ export class HabitEngine {
     /*
     *  loop through the last 180 days for fast lookups
     *  return string array with dates for previous 90-day comparison
-    */ 
+    */
     private generateDateLookup(todayStr: string): string[] {
         const lookup: string[] = [];
         const cursor = window.moment(todayStr, 'YYYY-MM-DD');
@@ -346,7 +262,7 @@ export class HabitEngine {
     *  calculate 90-day rolling averages, trending percentage change
     *  attach UI status flags (atRisk, isNewPR)
     *  
-    */ 
+    */
     private calculateFinalMetrics(stat: StatConfig, store: HabitStore, dataMap: any, lookup: string[], todayStr: string) {
         const habit = store.habits[stat.prop];
         if (!habit) return;
@@ -394,9 +310,47 @@ export class HabitEngine {
     }
 
     /*
+    *  pre-calculates the layout matrix for the view's heatmap (months, offsets, and data)
+    *  handles weekday alignment offsets and sanitizes historical data
+    */
+    private generateHeatmapMatrix(stat: StatConfig, dataMap: any, todayStr: string): HeatmapCell[][] {
+        const months: HeatmapCell[][] = [];
+
+        for (let i = 0; i < 3; i++) {
+            const monthContext = window.moment(todayStr).subtract(2 - i, 'months');
+            const daysInMonth = monthContext.daysInMonth();
+            const offset = (monthContext.startOf('month').day() + 6) % 7;
+
+            const cells: HeatmapCell[] = [];
+
+            // inject invisible padding cells to align dates with weekdays
+            for (let j = 0; j < offset; j++) {
+                cells.push({ date: "", value: null, isToday: false, isHidden: true });
+            }
+
+            // populate real days with sanitized values
+            for (let d = 1; d <= daysInMonth; d++) {
+                const dateStr = monthContext.date(d).format('YYYY-MM-DD');
+                const raw = dataMap[dateStr]?.[stat.prop];
+                const value = (raw !== undefined && raw !== null) ? this.sanitizeValue(raw, stat.boundaries) : null;
+
+                cells.push({
+                    date: dateStr,
+                    value: value,
+                    isToday: dateStr === todayStr,
+                    isHidden: false
+                });
+            }
+            months.push(cells);
+        }
+
+        return months;
+    }
+
+    /*
     *  calculate today's quest/habit completion ratio
     *  check for perfect day bonus (xp boost when all habits succeed)
-    */ 
+    */
     private calculateGlobalQuest(store: HabitStore) {
         // quest objectives are explicitly things marked as a 'habit'
         const questStats = this.stats.filter(s => s.type === "habit");
@@ -418,5 +372,4 @@ export class HabitEngine {
         store.global.levelData = HabitEngine.getLevelData(store.global.xp, this.settings.globalFactor);
         store.global.title = HabitEngine.getGlobalTitle(store.global.levelData.level);
     }
-
 }

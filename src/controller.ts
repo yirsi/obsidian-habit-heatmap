@@ -1,19 +1,22 @@
 import { App, TFile } from 'obsidian';
 import { HabitEngine } from './engine';
-import { DashboardView } from './view';
+import { DashboardRenderer } from './view'; // Renamed from view.ts
+import { StatConfig, HabitStore } from './types';
 
 export class DashboardController {
     app: App;
+    renderer: DashboardRenderer;
 
     constructor(app: App) {
         this.app = app;
+        this.renderer = new DashboardRenderer();
     }
 
     /*
-    *  Shared rendering logic to handle both Markdown Blocks and the Sidebar View
+    *  compiles data, renders html, and attaches listeners
     */
     public mountDashboard(el: HTMLElement, config: any) {
-        const { STATS =[], XP_SETTINGS = {}, FOLDER = '""' } = config;
+        const { STATS = [], XP_SETTINGS = {}, FOLDER = '""' } = config;
         const cleanFolder = FOLDER.replace(/"/g, '');
         const todayStr = window.moment().format('YYYY-MM-DD');
         
@@ -22,21 +25,18 @@ export class DashboardController {
         const container = el.createDiv();
 
         /*
-        *  compiles data through engine.ts 
-        *  refreshes the inner html of the dashboard container
+        *  refreshes the dashboard container using the renderer
         */
         const refreshUI = () => {
             const engine = new HabitEngine(STATS, XP_SETTINGS);
             const store = engine.process(dataMap, todayStr);
-            container.innerHTML = new DashboardView().renderDashboard(store, STATS, dataMap);
+            container.innerHTML = this.renderer.renderDashboard(store, STATS);
         };
 
+        // setup retry logic for dataview index lag
         let retries = 0;
         const maxRetries = 5;
 
-        /*
-        *  fetches data from dataview cache
-        */
         const loadAndRender = () => {
             const dv = (this.app as any).plugins.plugins["dataview"]?.api;
             if (!dv) {
@@ -61,6 +61,7 @@ export class DashboardController {
 
                 refreshUI();
 
+                // delegate all click events inside the dashboard container
                 container.addEventListener('click', (e) => {
                     this.handleInteraction(e, dataMap, todayStr, cleanFolder, refreshUI);
                 });
@@ -101,7 +102,7 @@ export class DashboardController {
             return;
         }
 
-        // stepper increment
+        // stepper logic
         if (target.matches('.step-btn')) {
             const valEl = card.querySelector('.hm-log-value');
             if (valEl) {
@@ -122,7 +123,7 @@ export class DashboardController {
             return;
         }
 
-        // reset value
+        // reset logic
         if (target.matches('.hm-log-reset')) {
             const valEl = card.querySelector('.hm-log-value');
             if (valEl) {

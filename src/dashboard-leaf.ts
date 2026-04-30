@@ -1,4 +1,3 @@
-// dashboard-view.ts
 import { ItemView, WorkspaceLeaf } from 'obsidian';
 import HabitDashboardPlugin from './main';
 
@@ -17,26 +16,30 @@ export class HabitDashboardView extends ItemView {
     }
 
     getDisplayText(): string {
-        return "Habit Dashboard";
+        return "Habit Heatmap Dashboard";
     }
 
     getIcon(): string {
         return "flame";
     }
 
+    /*
+    *  renders the dashboard into the main workspace tab
+    */
     async onOpen() {
         const container = this.contentEl;
         container.empty();
         
-        // Add classes for styling
+        // add classes for styling
         container.addClass('habit-dashboard-main-view');
 
-        // Force a re-parse of settings in case they weren't ready
+        // force a re-parse of settings in case they weren't ready
         let config;
         try {
             config = this.plugin.settings.parsedConfig;
         } catch (e) {
-            console.error("Dashboard View: Failed to load config", e);
+            const message = e instanceof Error ? e.message : String(e);
+            console.error("Dashboard View: Failed to load config", message);
         }
 
         if (!config) {
@@ -45,7 +48,7 @@ export class HabitDashboardView extends ItemView {
             return;
         }
 
-        // Mount the dashboard logic
+        // mount the dashboard logic through the controller
         this.plugin.controller.mountDashboard(container, config);
     }
 }
