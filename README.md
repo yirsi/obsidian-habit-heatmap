@@ -2,7 +2,7 @@
 
 A visual, gamified dashboard for tracking habits and life stats directly from your Daily Notes.
 
-![Habit Heatmap Dashboard](screenshots/habit-heatmap-screenshot-1.png)
+![Habit Heatmap Dashboard](screenshots/habit-heatmap-dashboard-showcase.gif)
 
 ## Features
 - **GitHub-Style Heatmaps**: Visual 90-day history for every stat.
