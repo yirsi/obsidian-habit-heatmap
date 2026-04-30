@@ -1,26 +1,44 @@
-import {App, PluginSettingTab, Setting} from "obsidian";
-import MyPlugin from "./main";
+import { App, PluginSettingTab, Setting } from 'obsidian';
+import HabitDashboardPlugin from './main';
+import { parseYaml } from 'obsidian';
 
-export interface MyPluginSettings {
-	mySetting: string;
-}
+export class HabitDashboardSettingTab extends PluginSettingTab {
+    plugin: HabitDashboardPlugin;
 
-export const DEFAULT_SETTINGS: MyPluginSettings = {
-	mySetting: 'default'
-}
+    constructor(app: App, plugin: HabitDashboardPlugin) {
+        super(app, plugin);
+        this.plugin = plugin;
+    }
 
-export class SampleSettingTab extends PluginSettingTab {
-	plugin: MyPlugin;
+    display(): void {
+        const { containerEl } = this;
+        containerEl.empty();
 
-	constructor(app: App, plugin: MyPlugin) {
-		super(app, plugin);
-		this.plugin = plugin;
-	}
+        containerEl.createEl('h2', { text: 'Habit Dashboard Settings' });
 
-	display(): void {
-		const {containerEl} = this;
-
-		containerEl.empty();
-
-	}
+        new Setting(containerEl)
+            .setName('Dashboard Configuration')
+            .setDesc('Paste your YAML configuration here. This will be used for the Main View and empty code blocks.')
+            .addTextArea(text => text
+                .setPlaceholder('FOLDER: "..." \nSTATS: ...')
+                .setValue(this.plugin.settings.yamlConfig)
+                .onChange(async (value) => {
+                    try {
+                        const parsed = parseYaml(value);
+                        if (parsed) {
+                            this.plugin.settings.yamlConfig = value;
+                            this.plugin.settings.parsedConfig = parsed;
+                            await this.plugin.saveSettings();
+                        }
+                    } catch (e) {
+                        // Optional: Show a visual hint that YAML is currently invalid
+                    }
+                }));
+        
+        // Add a helper note
+        containerEl.createEl('p', { 
+            text: 'Note: Changes will take effect the next time the Dashboard is opened or refreshed.',
+            cls: 'setting-item-description'
+        });
+    }
 }

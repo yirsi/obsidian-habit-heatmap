@@ -1,7 +1,7 @@
 {
 	"id": "habit-heatmap",
 	"name": "Habit Heatmap",
-	"version": "0.3.0",
+	"version": "0.3.1",
 	"minAppVersion": "0.15.0",
 	"description": "A habit tracker for obsidian in heatmap style",
 	"author": "Yirsi",
