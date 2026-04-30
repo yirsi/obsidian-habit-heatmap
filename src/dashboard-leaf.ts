@@ -31,7 +31,7 @@ export class HabitDashboardView extends ItemView {
         container.empty();
         
         // add classes for styling
-        container.addClass('habit-dashboard-main-view');
+        container.addClass('hhm-main-view');
 
         // force a re-parse of settings in case they weren't ready
         let config;

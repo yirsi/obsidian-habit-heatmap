@@ -16,7 +16,7 @@ export class DashboardRenderer {
         return `
             ${questHtml}
             ${globalXpHtml}
-            <div class="dashboard-wrapper">
+            <div class="hhm-wrapper">
                 ${cardsHtml}
             </div>
         `;
@@ -36,13 +36,13 @@ export class DashboardRenderer {
         const barStyle = `width:${completionPercentage}%`;
 
         return `
-            <div class="quest-container">
-                <div class="quest-label">
+            <div class="hhm-quest-container">
+                <div class="hhm-quest-label">
                     <span>🎯 DAILY QUEST</span>
                     <span>${progressLabel}</span>
                 </div>
-                <div class="quest-bar-outer">
-                    <div class="quest-bar-inner" style="${barStyle}"></div>
+                <div class="hhm-quest-bar-outer">
+                    <div class="hhm-quest-bar-inner" style="${barStyle}"></div>
                 </div>
             </div>
         `;
@@ -65,7 +65,7 @@ export class DashboardRenderer {
         const prevXpInLevel = Math.max(0, levelData.currentXp - todayXp);
         const prevPercentage = (prevXpInLevel / levelData.requiredXp) * 100;
 
-        const glowClass = isPerfectDay ? 'perfect-day-glow' : '';
+        const glowClass = isPerfectDay ? 'hhm-perfect-day-glow' : '';
         const xpBonusHtml = todayXp > 0 
             ? `<span style="color:var(--text-accent)">+${Math.floor(todayXp)}</span>` 
             : '';
@@ -75,18 +75,18 @@ export class DashboardRenderer {
         const prevStyle = `width:${prevPercentage}%; background:var(--text-accent); position: absolute; z-index: 2;`;
 
         return `
-            <div class="global-xp-wrapper ${glowClass}">
-                <div class="global-xp-label">
+            <div class="hhm-xp-wrapper ${glowClass}">
+                <div class="hhm-xp-label">
                     <span>🌍 ${title}</span>
                     <span>Lvl ${levelData.level}</span>
                 </div>
-                <div class="xp-bar-outer" style="height:12px; position: relative;">
+                <div class="hhm-xp-bar-outer" style="height:12px; position: relative;">
                     <!-- white bar (underneath, shows total width) -->
-                    <div class="xp-bar-inner today-highlight" style="${totalStyle}"></div>
+                    <div class="hhm-xp-bar-inner hhm-today-highlight" style="${totalStyle}"></div>
                     <!-- purple bar (on top, covers previous progress) -->
-                    <div class="xp-bar-inner" style="${prevStyle}"></div>
+                    <div class="hhm-xp-bar-inner" style="${prevStyle}"></div>
                 </div>
-                <div class="xp-label" style="margin-top:5px;font-size:0.8em;opacity:0.8">
+                <div class="hhm-xp-stats-label" style="margin-top:5px;font-size:0.8em;opacity:0.8">
                     <span>${xpText}</span>
                     ${xpBonusHtml}
                 </div>
@@ -101,14 +101,14 @@ export class DashboardRenderer {
     *  gives colored border to card container on habit success
     */
     private renderCard(stat: StatConfig, habit: HabitData | undefined): string {
-        if (!habit) return `<div class="hm-card">No data: ${stat.prop}</div>`;
+        if (!habit) return `<div class="hhm-card">No data: ${stat.prop}</div>`;
 
         const isPositive = stat.streakType === "positive";
         const isDone = isPositive ? habit.currentToday > 0 : habit.currentToday === 0;
         
-        const statusClass = (isPositive && isDone) ? 'hm-card-done' : '';
-        const prClass = habit.isNewPR ? 'hm-pr-enchanted' : '';
-        const cardClass = `hm-card ${statusClass} ${prClass}`;
+        const statusClass = (isPositive && isDone) ? 'hhm-card-done' : '';
+        const prClass = habit.isNewPR ? 'hhm-pr-enchanted' : '';
+        const cardClass = `hhm-card ${statusClass} ${prClass}`;
 
         const badgesHtml = this.renderBadges(stat, habit);
         const heatmapHtml = this.renderHeatmap(stat, habit);
@@ -118,12 +118,12 @@ export class DashboardRenderer {
         return `
             <div class="${cardClass}" data-prop="${stat.prop}">
                 ${badgesHtml}
-                <h3><span class="hm-title-text">${stat.title}</span></h3>
+                <h3><span class="hhm-title-text">${stat.title}</span></h3>
                 ${heatmapHtml}
                 ${footerHtml}
                 
                 <!-- interactive logging overlay and trigger -->
-                <div class="hm-log-trigger" title="Log today">+</div>
+                <div class="hhm-log-trigger" title="Log today">+</div>
                 ${overlayHtml}
             </div>
         `;
@@ -141,9 +141,9 @@ export class DashboardRenderer {
         if (isRating) {
             let buttons = "";
             for (let i = stat.boundaries.min; i <= stat.boundaries.max; i++) {
-                buttons += `<button class="hm-log-btn rating-btn" data-val="${i}">${i}</button>`;
+                buttons += `<button class="hhm-log-btn rating-btn" data-val="${i}">${i}</button>`;
             }
-            uiHtml = `<div class="hm-log-strip">${buttons}</div>`;
+            uiHtml = `<div class="hhm-log-strip">${buttons}</div>`;
         } else {
             const isMacro = stat.dataType === "time" && stat.boundaries.max > 24;
             const min = stat.boundaries.min;
@@ -153,25 +153,25 @@ export class DashboardRenderer {
             const isDisabled = (step: number) => (currentVal + step < min || currentVal + step > max) ? "disabled" : "";
 
             const stepperBtns = isMacro
-                ? `<button class="hm-log-btn step-btn" data-step="-30" ${isDisabled(-30)}>-30</button>
-                   <button class="hm-log-btn step-btn" data-step="-10" ${isDisabled(-10)}>-10</button>
-                   <div class="hm-log-value">${currentVal}</div>
-                   <button class="hm-log-btn step-btn" data-step="10" ${isDisabled(10)}>+10</button>
-                   <button class="hm-log-btn step-btn" data-step="30" ${isDisabled(30)}>+30</button>`
-                : `<button class="hm-log-btn step-btn" data-step="-1" ${isDisabled(-1)}>-1</button>
-                   <div class="hm-log-value">${currentVal}</div>
-                   <button class="hm-log-btn step-btn" data-step="1" ${isDisabled(1)}>+1</button>`;
+                ? `<button class="hhm-log-btn step-btn" data-step="-30" ${isDisabled(-30)}>-30</button>
+                   <button class="hhm-log-btn step-btn" data-step="-10" ${isDisabled(-10)}>-10</button>
+                   <div class="hhm-log-value">${currentVal}</div>
+                   <button class="hhm-log-btn step-btn" data-step="10" ${isDisabled(10)}>+10</button>
+                   <button class="hhm-log-btn step-btn" data-step="30" ${isDisabled(30)}>+30</button>`
+                : `<button class="hhm-log-btn step-btn" data-step="-1" ${isDisabled(-1)}>-1</button>
+                   <div class="hhm-log-value">${currentVal}</div>
+                   <button class="hhm-log-btn step-btn" data-step="1" ${isDisabled(1)}>+1</button>`;
 
-            uiHtml = `<div class="hm-log-stepper">${stepperBtns}</div>`;
+            uiHtml = `<div class="hhm-log-stepper">${stepperBtns}</div>`;
         }
 
-        const saveClass = isRating ? "hm-log-save rating-save" : "hm-log-save stepper-save";
+        const saveClass = isRating ? "hhm-log-save rating-save" : "hhm-log-save stepper-save";
 
         return `
-            <div class="hm-log-overlay" data-min="${stat.boundaries.min}" data-max="${stat.boundaries.max}">
-                <div class="hm-log-header">${stat.title}</div>
+            <div class="hhm-log-overlay" data-min="${stat.boundaries.min}" data-max="${stat.boundaries.max}">
+                <div class="hhm-log-header">${stat.title}</div>
                 ${uiHtml}
-                <div class="hm-log-reset" data-val="${stat.boundaries.default}" title="Reset to default">↺</div>
+                <div class="hhm-log-reset" data-val="${stat.boundaries.default}" title="Reset to default">↺</div>
                 <div class="${saveClass}" title="Confirm">✓</div>
             </div>
         `;
@@ -192,17 +192,17 @@ export class DashboardRenderer {
         if (habit.rank) {
             const rankTooltip = `${habit.rank.name} Rank\n${habit.rank.progress}% toward ${habit.rank.nextRank}`;
             rankHtml = `
-                <div class="rank-container" title="${rankTooltip}">
-                    <div class="rank-badge ${habit.rank.cssClass}">${habit.rank.name}</div>
+                <div class="hhm-rank-container" title="${rankTooltip}">
+                    <div class="hhm-rank-badge hhm-rank-${habit.rank.name.toLowerCase()}">${habit.rank.name}</div>
                 </div>
             `;
         }
 
         return `
-            <div class="mastery-container" title="${masteryTooltip}">
-                <div class="mastery-badge">Lvl ${habit.mastery.level}</div>
-                <div class="rank-progress-outer">
-                    <div class="rank-progress-inner" style="${progressStyle}"></div>
+            <div class="hhm-mastery-container" title="${masteryTooltip}">
+                <div class="hhm-mastery-badge">Lvl ${habit.mastery.level}</div>
+                <div class="hhm-rank-progress-outer">
+                    <div class="hhm-rank-progress-inner" style="${progressStyle}"></div>
                 </div>
             </div>
             ${rankHtml}
@@ -217,7 +217,7 @@ export class DashboardRenderer {
     private renderFooter(stat: StatConfig, habit: HabitData): string {
         const goal = stat.goal || "up";
         const trendIsGood = goal === "up" ? habit.trend > 0 : habit.trend < 0;
-        const trendClass = habit.trend !== 0 ? (trendIsGood ? 'trend-good' : 'trend-bad') : '';
+        const trendClass = habit.trend !== 0 ? (trendIsGood ? 'hhm-trend-good' : 'hhm-trend-bad') : '';
         const freqSuffix = stat.dataType === "rating" ? "" : ` / ${stat.freq}`;
 
         const currentValStr = this.formatValue(stat, habit.avg90);
@@ -236,7 +236,7 @@ export class DashboardRenderer {
         
         let streakHtml = "";
         if (habit.streak > 0) {
-            const streakClass = habit.atRisk ? 'streak-warning' : 'streak-active';
+            const streakClass = habit.atRisk ? 'hhm-streak-warning' : 'hhm-streak-active';
             streakHtml = ` | <span class="${streakClass}" title="${streakTooltip}">${streakIcon} ${habit.streak}</span>`;
         }
 
@@ -244,8 +244,8 @@ export class DashboardRenderer {
         const trendText = `${trendSign}${habit.trend.toFixed(0)}%`;
 
         return `
-            <div class="hm-footer">
-                <span title="${statsTooltip.trim()}" class="hm-stat-details" style="cursor: help;">
+            <div class="hhm-footer">
+                <span title="${statsTooltip.trim()}" class="hhm-stat-details" style="cursor: help;">
                     ${currentValStr}${freqSuffix} |
                     <span class="${trendClass}">${trendText}</span>
                 </span>
@@ -265,26 +265,26 @@ export class DashboardRenderer {
             const cellsHtml = month.map((cell: HeatmapCell) => {
                 // inject invisible padding cells to align dates with weekdays
                 if (cell.isHidden) {
-                    return `<div class="hm-cell hm-hidden"></div>`;
+                    return `<div class="hhm-cell hhm-hidden"></div>`;
                 }
 
                 const color = this.renderCellColor(cell.value, habitData.maxRecorded, stat.color, stat.boundaries);
-                const isTodayClass = cell.isToday ? 'hm-today' : '';
+                const isTodayClass = cell.isToday ? 'hhm-today' : '';
                 const titleText = `${cell.date}: ${cell.value !== null ? cell.value : 'No data'}`;
                 const cellStyle = `background-color: ${color}`;
 
                 return `
-                    <div class="hm-cell ${isTodayClass}"
+                    <div class="hhm-cell ${isTodayClass}"
                          style="${cellStyle}"
                          title="${titleText}">
                     </div>
                 `;
             }).join("");
 
-            return `<div class="hm-month">${cellsHtml}</div>`;
+            return `<div class="hhm-month">${cellsHtml}</div>`;
         }).join("");
 
-        return `<div class="hm-months-wrapper">${monthsHtml}</div>`;
+        return `<div class="hhm-months-wrapper">${monthsHtml}</div>`;
     }
 
     /*

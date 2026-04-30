@@ -1,3 +1,11 @@
+## [0.4.1] - 2026-04-30
+
+### Changes
+
+- Changed css class names
+- Classes now use prefix hhm-
+
+
 ## [0.4.0] - 2026-04-30
 
 ### Changes

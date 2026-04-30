@@ -82,40 +82,40 @@ export class DashboardController {
     */
     private async handleInteraction(e: Event, dataMap: Record<string, any>, todayStr: string, folder: string, refreshUI: () => void) {
         const target = e.target as HTMLElement;
-        const card = target.closest('.hm-card') as HTMLElement;
+        const card = target.closest('.hhm-card') as HTMLElement;
         if (!card) return;
 
         const prop = card.getAttribute('data-prop');
         if (!prop) return;
 
         // open overlay trigger
-        if (target.matches('.hm-log-trigger')) {
-            target.closest('.dashboard-wrapper')?.querySelectorAll('.hm-log-overlay.is-active')
+        if (target.matches('.hhm-log-trigger')) {
+            target.closest('.hhm-wrapper')?.querySelectorAll('.hhm-log-overlay.is-active')
                 .forEach(ov => ov.classList.remove('is-active'));
-            card.querySelector('.hm-log-overlay')?.classList.add('is-active');
+            card.querySelector('.hhm-log-overlay')?.classList.add('is-active');
             return;
         }
 
         // cancel overlay action
-        if (target.classList.contains('hm-log-overlay') || target.matches('.cancel')) {
+        if (target.classList.contains('hhm-log-overlay') || target.matches('.cancel')) {
             target.classList.remove('is-active');
             return;
         }
 
         // stepper logic
         if (target.matches('.step-btn')) {
-            const valEl = card.querySelector('.hm-log-value');
+            const valEl = card.querySelector('.hhm-log-value');
             if (valEl) {
                 const step = parseInt(target.getAttribute('data-step') || '0', 10);
                 const current = parseFloat(valEl.textContent || '0');
                 const newVal = current + step;
                 valEl.textContent = String(newVal);
 
-                const overlay = target.closest('.hm-log-overlay') as HTMLElement;
+                const overlay = target.closest('.hhm-log-overlay') as HTMLElement;
                 const min = parseFloat(overlay.getAttribute('data-min') || '0');
                 const max = parseFloat(overlay.getAttribute('data-max') || '999');
                 
-                overlay.querySelectorAll<HTMLButtonElement>('.step-btn').forEach(btn => {
+                overlay.querySelectorAll<HTMLButtonElement>('.hhm-log-btn').forEach(btn => {
                     const bStep = parseInt(btn.getAttribute('data-step') || '0', 10);
                     btn.disabled = (newVal + bStep < min || newVal + bStep > max);
                 });
@@ -124,17 +124,17 @@ export class DashboardController {
         }
 
         // reset logic
-        if (target.matches('.hm-log-reset')) {
-            const valEl = card.querySelector('.hm-log-value');
+        if (target.matches('.hhm-log-reset')) {
+            const valEl = card.querySelector('.hhm-log-value');
             if (valEl) {
                 const defaultVal = target.getAttribute('data-val') || '0';
                 valEl.textContent = defaultVal;
 
-                const overlay = target.closest('.hm-log-overlay') as HTMLElement;
+                const overlay = target.closest('.hhm-log-overlay') as HTMLElement;
                 const min = parseFloat(overlay.getAttribute('data-min') || '0');
                 const max = parseFloat(overlay.getAttribute('data-max') || '999');
                 
-                overlay.querySelectorAll<HTMLButtonElement>('.step-btn').forEach(btn => {
+                overlay.querySelectorAll<HTMLButtonElement>('.hhm-log-btn').forEach(btn => {
                     const bStep = parseInt(btn.getAttribute('data-step') || '0', 10);
                     btn.disabled = (parseFloat(defaultVal) + bStep < min || parseFloat(defaultVal) + bStep > max);
                 });
@@ -144,13 +144,13 @@ export class DashboardController {
 
         // save logic
         if (target.matches('.stepper-save') || target.matches('.rating-btn')) {
-            const overlay = card.querySelector('.hm-log-overlay');
+            const overlay = card.querySelector('.hhm-log-overlay');
             let finalVal = 0;
 
             if (target.matches('.rating-btn')) {
                 finalVal = parseFloat(target.getAttribute('data-val') || '0');
             } else {
-                finalVal = parseFloat(overlay?.querySelector('.hm-log-value')?.textContent || '0');
+                finalVal = parseFloat(overlay?.querySelector('.hhm-log-value')?.textContent || '0');
             }
 
             overlay?.classList.remove('is-active');
@@ -164,7 +164,7 @@ export class DashboardController {
         }
 
         if (target.matches('.rating-save')) {
-            card.querySelector('.hm-log-overlay')?.classList.remove('is-active');
+            card.querySelector('.hhm-log-overlay')?.classList.remove('is-active');
         }
     }
 

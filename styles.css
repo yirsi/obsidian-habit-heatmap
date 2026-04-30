@@ -1,7 +1,6 @@
 /* --- 1. LAYOUT & GRID --- */
-.dashboard-wrapper {
+.hhm-wrapper {
     display: grid;
-    /* Added min(100%, ...) so it shrinks on mobile devices instead of overflowing */
     grid-template-columns: repeat(auto-fill, minmax(min(100%, 300px), 1fr));
     gap: 15px;
     width: 100%;
@@ -11,7 +10,7 @@
 }
 
 /* --- 2. HABIT CARDS --- */
-.hm-card {
+.hhm-card {
     position: relative;
     background: var(--background-secondary);
     border: 1px solid var(--background-modifier-border);
@@ -23,23 +22,22 @@
     overflow: visible;
     transition: all 0.2s ease;
     gap: 8px;
-    /* Added to ensure padding doesn't push the card wider than the screen on mobile */
     box-sizing: border-box; 
 }
 
-.hm-card-done {
+.hhm-card-done {
     border: 1px solid var(--text-accent) !important;
     box-shadow: 0 0 10px rgba(var(--text-accent-rgb), 0.2);
 }
 
-.hm-card h3 {
+.hhm-card h3 {
     margin: 5px 0 0 0;
     font-size: 1.05em;
     text-align: center;
     width: 100%;
 }
 
-.hm-footer {
+.hhm-footer {
     font-size: 0.8em;
     color: var(--text-muted);
     width: 100%;
@@ -48,7 +46,7 @@
 }
 
 /* --- 3. BADGES (Mastery & Rank) --- */
-.mastery-container { 
+.hhm-mastery-container { 
     position: absolute; 
     top: 10px; 
     left: 10px; 
@@ -56,7 +54,7 @@
     flex-direction: column; 
     gap: 3px; 
 }
-.rank-container { 
+.hhm-rank-container { 
     position: absolute; 
     top: 10px; 
     right: 10px; 
@@ -65,7 +63,7 @@
     align-items: flex-end; 
 }
 
-.mastery-badge, .rank-badge {
+.hhm-mastery-badge, .hhm-rank-badge {
     font-size: 0.55em;
     padding: 2px 5px;
     border-radius: 3px;
@@ -75,37 +73,37 @@
     color: white;
 }
 
-.mastery-badge { 
+.hhm-mastery-badge { 
     background: var(--background-modifier-border-hover); 
     color: var(--text-muted); 
 }
 
 /* Rank Colors */
-.rank-iron { background: #726154; } 
-.rank-bronze { background: #cd7f32; } 
-.rank-silver { background: #a8a8a8; } 
-.rank-gold { background: #d4af37; color: black; } 
-.rank-platinum { background: #317f8b; } 
-.rank-emerald { background: #2ecc71; } 
-.rank-diamond { background: #52adc8; box-shadow: 0 0 5px #52adc8; }
+.hhm-rank-iron { background: #726154; } 
+.hhm-rank-bronze { background: #cd7f32; } 
+.hhm-rank-silver { background: #a8a8a8; } 
+.hhm-rank-gold { background: #d4af37; color: black; } 
+.hhm-rank-platinum { background: #317f8b; } 
+.hhm-rank-emerald { background: #2ecc71; } 
+.hhm-rank-diamond { background: #52adc8; box-shadow: 0 0 5px #52adc8; }
 
-.rank-progress-outer { 
+.hhm-rank-progress-outer { 
     width: 35px; 
     height: 2px; 
     background: var(--background-modifier-border); 
     border-radius: 1px; 
     overflow: hidden; 
 }
-.rank-progress-inner { 
+.hhm-rank-progress-inner { 
     height: 100%; 
     background: var(--text-accent); 
 }
-.mastery-container .rank-progress-inner { 
+.hhm-mastery-container .hhm-rank-progress-inner { 
     background: var(--text-faint); 
 }
 
 /* --- 4. HEATMAP GRID --- */
-.hm-months-wrapper {
+.hhm-months-wrapper {
     display: flex;
     gap: 10px;
     margin-bottom: 10px;
@@ -115,31 +113,31 @@
     overflow-x: auto;
     padding-bottom: 4px;
 }
-.hm-months-wrapper::-webkit-scrollbar { display: none; }
+.hhm-months-wrapper::-webkit-scrollbar { display: none; }
 
-.hm-month { 
+.hhm-month { 
     display: grid; 
     grid-template-rows: repeat(7, 12px); 
     grid-auto-flow: column; 
     gap: 3px; 
 }
-.hm-cell { 
+.hhm-cell { 
     width: 12px; 
     height: 12px; 
     border-radius: 2px; 
     cursor: pointer !important; 
 }
-.hm-hidden { visibility: hidden; }
-.hm-today { outline: 1px solid var(--text-faint); outline-offset: 1px; z-index: 1; }
+.hhm-hidden { visibility: hidden; }
+.hhm-today { outline: 1px solid var(--text-faint); outline-offset: 1px; z-index: 1; }
 
 /* --- 5. STREAKS & TRENDS --- */
-.streak-active { color: #ff9500; font-weight: bold; }
-.streak-warning { color: #ff3b30; animation: pulse 1.5s infinite; font-weight: bold; }
-.trend-good { color: var(--text-success); font-weight: bold; }
-.trend-bad { color: var(--text-error); font-weight: bold; }
+.hhm-streak-active { color: #ff9500; font-weight: bold; }
+.hhm-streak-warning { color: #ff3b30; animation: pulse 1.5s infinite; font-weight: bold; }
+.hhm-trend-good { color: var(--text-success); font-weight: bold; }
+.hhm-trend-bad { color: var(--text-error); font-weight: bold; }
 
 /* --- 6. PROGRESS BARS (Global & Quest) --- */
-.quest-container { 
+.hhm-quest-container { 
     background: rgba(var(--text-accent-rgb), 0.05); 
     padding: 10px; 
     border-radius: 8px; 
@@ -148,57 +146,56 @@
     margin: 0 auto 15px auto;
     box-sizing: border-box;
 }
-.quest-label, .global-xp-label, .xp-label { 
+.hhm-quest-label, .hhm-xp-label, .hhm-xp-stats-label { 
     display: flex; 
     justify-content: space-between; 
     font-weight: bold; 
 }
-.quest-label { font-size: 0.75em; margin-bottom: 6px; color: var(--text-muted); }
+.hhm-quest-label { font-size: 0.75em; margin-bottom: 6px; color: var(--text-muted); }
 
-.quest-bar-outer, .xp-bar-outer { 
+.hhm-quest-bar-outer, .hhm-xp-bar-outer { 
     background: var(--background-modifier-hover); 
     border-radius: 4px; 
     overflow: hidden; 
 }
-.quest-bar-outer { height: 6px; }
-.quest-bar-inner { 
+.hhm-quest-bar-outer { height: 6px; }
+.hhm-quest-bar-inner { 
     height: 100%; 
     background: linear-gradient(90deg, #00d2ff, #3a7bd5); 
     transition: width 0.5s ease; 
 }
 
-.global-xp-wrapper { 
+.hhm-xp-wrapper { 
     background: var(--background-secondary); 
     border-radius: 8px; 
     padding: 12px; 
     border: 1px solid var(--text-accent); 
     text-align: center; 
-    /* Match the grid's max-width and center it */
     max-width: 1300px;
     margin: 0 auto 20px auto; 
     box-sizing: border-box;
 }
-.global-xp-label { font-size: 0.9em; margin-bottom: 8px; }
-.global-xp-label span:first-child { 
+.hhm-xp-label { font-size: 0.9em; margin-bottom: 8px; }
+.hhm-xp-label span:first-child { 
     letter-spacing: 1px; 
     text-transform: uppercase; 
     font-size: 0.85em; 
     color: var(--text-accent); 
 }
 
-.xp-bar-outer { display: flex; height: 8px; }
-.xp-bar-inner { height: 100%; transition: width 0.5s; }
-.today-highlight { background: white; box-shadow: 0 0 8px white; opacity: 0.8; }
+.hhm-xp-bar-outer { display: flex; height: 8px; }
+.hhm-xp-bar-inner { height: 100%; transition: width 0.5s; }
+.hhm-today-highlight { background: white; box-shadow: 0 0 8px white; opacity: 0.8; }
 
 /* --- 7. SPECIAL EFFECTS & ANIMATIONS --- */
-.perfect-day-glow { 
+.hhm-perfect-day-glow { 
     border: 2px solid #D4AF37 !important; 
     background: rgba(184, 134, 11, 0.08) !important; 
     animation: pulse-warm-gold 2s infinite; 
 }
-.perfect-day-glow span { color: #E4B44A !important; text-shadow: 0 0 5px rgba(184, 134, 11, 0.5); }
+.hhm-perfect-day-glow span { color: #E4B44A !important; text-shadow: 0 0 5px rgba(184, 134, 11, 0.5); }
 
-.hm-pr-enchanted .hm-title-text {
+.hhm-pr-enchanted .hhm-title-text {
     background: linear-gradient(120deg, var(--text-normal) 25%, #b19cd9 40%, #ffffff 50%, #b19cd9 60%, var(--text-normal) 75%);
     background-size: 200% auto; 
     -webkit-background-clip: text; 
@@ -211,19 +208,19 @@
 @keyframes pulse-warm-gold { 0%, 100% { border-color: #B8860B; } 50% { border-color: #D4AF37; box-shadow: 0 0 20px rgba(228, 180, 74, 0.4); } }
 @keyframes enchanted-text-shimmer { 0% { background-position: 200% center; } 100% { background-position: -200% center; }} 
 
-/* Globals: enforce pointer cursors */
-.hm-stat-details, 
-.streak-active, 
-.streak-warning, 
-.mastery-container, 
-.rank-container {
+/* enforce pointer cursors */
+.hhm-stat-details, 
+.hhm-streak-active, 
+.hhm-streak-warning, 
+.hhm-mastery-container, 
+.hhm-rank-container {
     cursor: pointer !important;
 }
 
 /* --- 8. LOGGING OVERLAY & MORPH BUTTONS --- */
 
 /* trigger button (bottom right of card) */
-.hm-log-trigger {
+.hhm-log-trigger {
     position: absolute;
     bottom: 8px; right: 8px;
     width: 28px; height: 28px;
@@ -238,22 +235,22 @@
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-.hm-card:hover .hm-log-trigger { opacity: 1; }
-.hm-log-trigger:hover { 
+.hhm-card:hover .hhm-log-trigger { opacity: 1; }
+.hhm-log-trigger:hover { 
     background: var(--text-accent); 
     color: white; 
     transform: scale(1.1); 
 }
 
 /* spin (+) out when overlay opens */
-.hm-card:has(.hm-log-overlay.is-active) .hm-log-trigger {
+.hhm-card:has(.hhm-log-overlay.is-active) .hhm-log-trigger {
     transform: rotate(90deg) scale(0);
     opacity: 0;
     pointer-events: none;
 }
 
 /* glassy overlay */
-.hm-log-overlay {
+.hhm-log-overlay {
     position: absolute; 
     inset: 0;
     background: rgba(var(--background-primary-rgb), 0.8);
@@ -271,9 +268,9 @@
     border-radius: 8px;
 }
 
-.hm-log-overlay.is-active { opacity: 1; pointer-events: auto; }
+.hhm-log-overlay.is-active { opacity: 1; pointer-events: auto; }
 
-.hm-log-header { 
+.hhm-log-header { 
     font-weight: bold; 
     color: var(--text-normal); 
     font-size: 1.1em; 
@@ -282,7 +279,7 @@
 }
 
 /* save button checkmark */
-.hm-log-save {
+.hhm-log-save {
     position: absolute;
     bottom: 8px; right: 8px;
     width: 28px; height: 28px;
@@ -299,15 +296,15 @@
 }
 
 /* spin checkmark in when overlay opens */
-.hm-log-overlay.is-active .hm-log-save {
+.hhm-log-overlay.is-active .hhm-log-save {
     transform: rotate(0deg) scale(1);
     opacity: 1;
 }
 
-.hm-log-save:hover { transform: scale(1.15) !important; }
+.hhm-log-save:hover { transform: scale(1.15) !important; }
 
 /* reset button */
-.hm-log-reset {
+.hhm-log-reset {
     position: absolute;
     bottom: 8px; left: 8px;
     width: 28px; height: 28px;
@@ -320,20 +317,20 @@
     transition: all 0.2s ease;
 }
 
-.hm-log-reset:hover { 
+.hhm-log-reset:hover { 
     color: var(--text-normal); 
     transform: rotate(-45deg); 
 }
 
 /* button strip (ratings) */
-.hm-log-strip { 
+.hhm-log-strip { 
     display: flex; 
     flex-wrap: wrap; 
     gap: 6px; 
     justify-content: center; 
     padding: 0 10px; 
 }
-.hm-log-btn { 
+.hhm-log-btn { 
     background: var(--background-secondary-alt); 
     border: 1px solid var(--background-modifier-border); 
     color: var(--text-normal); 
@@ -343,11 +340,11 @@
     font-weight: bold; 
     transition: all 0.1s ease; 
 }
-.hm-log-btn:hover { 
+.hhm-log-btn:hover { 
     background: var(--background-modifier-hover); 
     border-color: var(--text-accent); 
 }
-.hm-log-btn:disabled {
+.hhm-log-btn:disabled {
     opacity: 0.3;
     cursor: not-allowed;
     border-color: var(--background-modifier-border);
@@ -355,12 +352,12 @@
 }
 
 /* stepper container */
-.hm-log-stepper { 
+.hhm-log-stepper { 
     display: flex; 
     align-items: center; 
     gap: 10px; 
 }
-.hm-log-value { 
+.hhm-log-value { 
     font-size: 1.5em; 
     font-weight: bold; 
     color: var(--text-accent); 
@@ -368,16 +365,16 @@
     text-align: center; 
 }
 
-/* Target custom view container */
-.habit-dashboard-main-view {
+/* target custom view container */
+.hhm-main-view {
     padding: 20px !important;
     max-width: 100% !important;
     width: 100% !important;
     overflow-y: auto;
 }
 
-/* Force the internal dashboard wrapper to be wide */
-.habit-dashboard-main-view .dashboard-wrapper {
+/* force the internal dashboard wrapper to be wide */
+.hhm-main-view .hhm-wrapper {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(min(100%, 300px), 1fr));
     gap: 20px;
@@ -391,20 +388,20 @@
 
 /* --- 9. SETTINGS UI --- */
 
-/* Force the setting item to stack label above the input */
-.habit-settings-area {
+/* force the setting item to stack label above the input */
+.hhm-settings-area {
     flex-direction: column;
     align-items: flex-start;
     gap: 10px;
 }
 
-/* Make the control container take up 100% width */
-.habit-settings-area .setting-item-control {
+/* make the control container take up 100% width */
+.hhm-settings-area .setting-item-control {
     width: 100%;
 }
 
-/* Make the actual text area large and monospaced */
-.habit-settings-area textarea {
+/* make the actual text area large and monospaced */
+.hhm-settings-area textarea {
     width: 100%;
     height: 500px;
     font-family: var(--font-monospace);

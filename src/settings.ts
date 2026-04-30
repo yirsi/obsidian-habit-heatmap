@@ -19,7 +19,7 @@ export class HabitDashboardSettingTab extends PluginSettingTab {
 new Setting(containerEl)
     .setName('Dashboard Configuration')
     .setDesc('Paste your YAML configuration here.')
-    .setClass('habit-settings-area')
+    .setClass('hhm-settings-area')
     .addTextArea(text => text
         .setPlaceholder('FOLDER: "..." \nSTATS: ...')
         .setValue(this.plugin.settings.yamlConfig)
