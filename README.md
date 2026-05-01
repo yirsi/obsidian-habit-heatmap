@@ -6,11 +6,11 @@ A visual, gamified dashboard for tracking habits and life stats directly from yo
 
 ## Features
 - **GitHub-Style Heatmaps**: Visual 90-day history for every stat.
-- **Gamified Progression**: Earn XP and level up your habits.
-- **Competitive Ranks**: Tiered ranking system (Iron to Diamond) based on 90-day performance.
-- **Daily Quests**: Visual progress bar for your daily habit completion.
-- **Smart Data**: Automatic sanitization and default values for missing logs.
-- **Interactive logging**: Heatmap overlay to quick edit daily note frontmatter
+- **Gamified Progression**: Earn XP, level up, and earn cosmetic titles.
+- **Competitive Ranks**: Tiered ranking system (Iron to Diamond) based on performance averages.
+- **Smart UI**: Automatically switches between quick-tap buttons or steppers based on your min/max boundaries.
+- **Interactive Logging**: Heatmap overlay to quick-edit daily note frontmatter directly from the dashboard.
+- **Avoidance Habits**: Supports tracking and rewarding habits where the goal is 0 (e.g., quitting smoking).
 
 ## Planned
 - [x] Configuration menu instead of YAML
@@ -18,7 +18,8 @@ A visual, gamified dashboard for tracking habits and life stats directly from yo
 - [x] Interactive data logging from dashboard
 - [ ] Unlock achievements for milestones
 - [ ] Improve plugin performance 
-- [ ] Refractor messy classes (esp view.ts) 
+- [x] Refactor messy classes
+- [ ] Refactor messy classes again
 - [ ] Submit plugin to official plugin list
 
 ## Prerequisites
@@ -30,23 +31,29 @@ A visual, gamified dashboard for tracking habits and life stats directly from yo
 3. Enable the plugin in Obsidian settings.
 
 ## Usage
-Change YAML in settings menu.
-Use the plugin view via the left sidebar flame ribbon icon
-Alternatively you can add the following codeblock to your markdown to also summon the view
+Add and configure your trackers directly in the **Obsidian Settings Menu**.
+Open the dashboard by clicking the **Flame icon** in the left ribbon menu. 
+
+Alternatively, add an empty codeblock to any markdown note to embed the dashboard:
 ````
 ```habit-heatmap
 ```
 ````
 
-### Settings Example
+### Advanced YAML Example
+While the UI handles configuration, you can use the "Advanced" toggle on any tracker to manually edit its YAML:
 ```yaml
-FOLDER: '"100 Journal"'
-XP_SETTINGS: { globalFactor: 30, treeFactor: 50 }
-
-STATS:
-  - { prop: "mood", type: "metric", dataType: "rating", title: "🧠 Mood", streakType: "none", boundaries: { min: 1, default: 4, max: 7 }, color: { type: "absolute", palette: ["#ff2222", "#eeee44", "#33ff44"] } }
-  - { prop: "exercise", type: "habit", dataType: "time", title: "🏋️ Exercise", streakType: "positive", unit: "min", freq: "day", boundaries: { min: 0, default: 0, max: 1440 }, mastery: 60, xp: { type: "linear", div: 1 }, color: { type: "relative", rgb: "255, 140, 0" } }
-  - { prop: "cannabis", type: "metric", dataType: "amount", title: "🌿 Cannabis", streakType: "negative", goal: "down", unit: "use", freq: "week", boundaries: { min: 0, default: 0, max: 99 }, color: { type: "relative", rgb: "107, 142, 35" } }
+prop: "exercise"
+title: "🏋️ Exercise"
+type: "habit"
+unit: "min"
+goal: "up"
+freq: "day"
+multiplier: 1
+mastery: 60
+streakEnabled: true
+boundaries: { min: 0, default: 0, max: 1440 }
+color: { type: "relative", rgb: "255, 140, 0" }
 ```
 
 ### Daily Note Example 
@@ -55,28 +62,26 @@ The plugin reads from the frontmatter of your daily notes:
 ---
 mood: 5
 exercise: 45
-cannabis: 1
+cannabis: 0
 ---
 ```
 
 ### Dashboard Stat Configuration Reference
 
-Each item in the `STATS` list defines how a specific piece of data is processed and displayed.
+Each tracker is defined by the following properties, accessible via the Settings tab.
 
 | Property | Description |
 | :--- | :--- |
 | `prop` | The key used in your Daily Note frontmatter (e.g., `exercise`). |
-| `type` | `habit` (shows level/rank/XP) or `metric` (info-only card). |
-| `dataType` | `rating` (centered at default), `time` (mins/hours), or `amount` (counts). |
 | `title` | The display name shown at the top of the card. |
-| `streakType` | `positive` (log > 0), `negative` (log = 0), or `none`. |
-| `goal` | `up` or `down`. Determines if a positive trend shows as green or red. |
+| `type` | `habit` (shows level/rank/XP) or `metric` (info-only card). |
 | `unit` | The label for your data (e.g., `min`, `h`, `score`). |
-| `freq` | `day` or `week`. Weekly scales daily averages by 7 in tooltips. |
-| `boundaries` | Defines `min`, `max`, and the `default` value used if a day is blank. |
+| `goal` | `up` or `down`. Determines streak logic and XP rewards. |
+| `freq` | `day`, `week`, or `month`. Adjusts how averages are displayed. |
+| `multiplier` | XP awarded per unit. If `goal: down`, flat XP awarded for logging 0. |
 | `mastery` | The daily average required to reach the "Diamond" rank. |
-| `xp` | Configures XP gain (e.g., `{ type: "linear", div: 1 }`). |
-| `color` | `absolute` (uses a 3-color palette) or `relative` (uses RGB + opacity). |
+| `streakEnabled` | `true` or `false`. Toggles the streak tracker. |
+| `boundaries` | `min`, `max`, and `default`. If max - min is 7 or less, UI uses quick-tap buttons. |
+| `color` | `absolute` (uses a 3-color palette) or `relative` (uses base RGB + opacity). |
 
-**Note on Boundaries:** The `default` value acts as your baseline. For ratings (like Mood), the UI will show `+` or `-` relative to this number.
-For all stats, the engine uses this value to fill in gaps for days you forgot to log.
+**Note on Boundaries:** The engine uses your `default` value to safely fill in gaps for days you forgot to log.

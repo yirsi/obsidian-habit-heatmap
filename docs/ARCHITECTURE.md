@@ -10,8 +10,8 @@
 - `main.ts`: plugin entry point
 
 ## Data Flow
-1. `main.ts` or `dashboard-leaf.ts` calls `controller.ts`
-2. `controller.ts` fetches data from dataview
+1. `main.ts` (codeblocks) or `dashboard-leaf.ts` (main view) calls `controller.ts`
+2. `controller.ts` fetches raw data from dataview
 3. `engine.ts` processes data into `HabitStore`
-4. `view.ts` renders html based on `HabitStore`
+4. `view.ts` renders an html string based on `HabitStore`
 5. `controller.ts` mounts the html and handles interactions

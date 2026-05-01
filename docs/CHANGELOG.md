@@ -1,4 +1,16 @@
-## [0.4.1] - 2026-04-30
+### [0.5.0] - 2026-05-01
+
+### Changes
+
+- Updated settings menu to be more user friendly
+- Using UI for tracker creation is now the default, but using YAML is still an option
+- Major Rework of types and logic
+- Updated code to conform with ESLint rules
+- Removed Quest bar and merged it with XP bar
+- Dashboard automatically switches between buttons and stepper inputs depending on boundaries
+- added monthly average tracking support
+
+# [0.4.1] - 2026-04-30
 
 ### Changes
 

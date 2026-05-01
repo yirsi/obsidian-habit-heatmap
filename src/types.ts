@@ -1,131 +1,126 @@
-// plugin global settings including raw and parsed yaml
+// plugin global settings including folder and tracker list
 export interface HabitDashboardSettings {
-    yamlConfig: string;
-    parsedConfig: any;
+	folder: string;
+	stats: StatConfig[];
+	xpSettings: XpSettings;
 }
 
-// global multipliers and factors for xp calculation
+// character leveling and habit mastery math factors
 export interface XpSettings {
-    globalFactor: number;
-    treeFactor: number;
-    taskMultiplier: number;
-    minutesPerXp: number;
-    sleepBaseHours: number;
-    sleepXpMultiplier: number;
+	globalFactor: number;
+	treeFactor: number;
 }
-
-// classification for trackers as either habits or metrics
-export type StatType = "habit" | "metric";
-
-// logical rules for how streaks are tracked or broken
-export type StreakType = "positive" | "negative" | "none";
-
-// format of the recorded data like rating or time
-export type DataType = "rating" | "time" | "amount";
 
 // limits and default values for numeric property data
 export interface Boundaries {
-    min: number;
-    default: number;
-    max: number;
+	min: number;
+	default: number;
+	max: number;
 }
 
 // visual style rules for heatmap cell coloring
 export interface ColorConfig {
-    type: "absolute" | "relative";
-    palette?: string[];
-    colors?: string[];
-    rgb?: string;
-}
-
-// mathematical rules for xp gain per stat
-export interface XpConfig {
-    type: "multiplier" | "threshold" | "none" | "linear";
-    mul?: number;
-    base?: number;
-    div?: number;
+	type: "absolute" | "relative";
+	palette?: string[]; // used for absolute
+	rgb?: string; // used for relative
 }
 
 // specific user configuration for an individual tracker
 export interface StatConfig {
-    prop: string;
-    title: string;
-    type: StatType;
-    dataType: DataType;
-    streakType: StreakType;
-    goal: "up" | "down";
-    mastery: number;
-    xp: XpConfig;
-    unit: string;
-    freq: "day" | "week";
-    boundaries: Boundaries;
-    color: ColorConfig;
+	prop: string;
+	title: string;
+	type: "habit" | "metric";
+	unit: string;
+	goal: "up" | "down";
+	freq: "day" | "week" | "month";
+	multiplier: number;
+	mastery: number;
+	streakEnabled: boolean;
+	boundaries: Boundaries;
+	color: ColorConfig;
 }
 
-// calculated progress and xp requirements for a level
-export interface LevelData {
-    level: number;
-    progress: number;
-    totalXp: number;
-    currentXp: number;
-    requiredXp: number;
-}
-
-// progress toward the next mastery tier and css classes
-export interface RankData {
-    name: string;
-    cssClass: string;
-    progress: number;
-    nextRank: string;
+// calculated rpg progress including levels and ranks
+export interface MasteryData {
+	level: number;
+	totalXp: number;
+	currentXp: number;
+	requiredXp: number;
+	progress: number;
+	rankName?: string;
+	rankClass?: string;
+	nextRank?: string;
 }
 
 // data for a single day in the heatmap grid
 export interface HeatmapCell {
-    date: string;
-    value: number | null; 
-    isToday: boolean;
-    isHidden: boolean;
+	date: string;
+	value: number | null;
+	isToday: boolean;
+	isHidden: boolean;
 }
 
 // calculated history, streaks, and mastery for a specific stat
 export interface HabitData {
-    maxRecorded: number;
-    currentToday: number;
-    lifetimeSum: number;
-    firstLogDate: string | null;
-    avg90: number;
-    prevAvg90: number;
-    lifetimeAvg: number;
-    logs90: number;
-    streak: number;
-    bestStreak: number;
-    cheatDays: number;
-    daysSinceMiss: number;
-    totalXp: number;
-    todayXp: number;
-    rank?: RankData | null;
-    mastery?: LevelData;
-    atRisk: boolean;
-    isNewPR: boolean;
-    trend: number;
-    heatmap: HeatmapCell[][]; 
+	maxRecorded: number;
+	currentToday: number;
+	lifetimeSum: number;
+	firstLogDate: string | null;
+	avg90: number;
+	prevAvg90: number;
+	lifetimeAvg: number;
+	logs90: number;
+	streak: number;
+	bestStreak: number;
+	cheatDays: number;
+	daysSinceMiss: number;
+	totalXp: number;
+	todayXp: number;
+	mastery?: MasteryData; // unified rpg stats
+	atRisk: boolean;
+	isNewPR: boolean;
+	trend: number;
+	heatmap: HeatmapCell[][];
 }
 
 // overall user progress, quests, and perfect day status
 export interface GlobalData {
-    xp: number;
-    todayXp: number;
-    isPerfectDay: boolean;
-    title: string;
-    quest: { 
-        completed: number; 
-        total: number;
-    };
-    levelData: LevelData;
+	xp: number;
+	todayXp: number;
+	isPerfectDay: boolean;
+	title: string;
+	quest: { completed: number; total: number };
+	levelData: {
+		level: number;
+		progress: number;
+		currentXp: number;
+		requiredXp: number;
+	};
 }
 
 // final payload of all processed data ready for the view
 export interface HabitStore {
-    habits: Record<string, HabitData>;
-    global: GlobalData;
+	habits: Record<string, HabitData>;
+	global: GlobalData;
 }
+
+// defaults for a fresh installation
+export const DEFAULT_XP_SETTINGS: XpSettings = {
+	globalFactor: 30,
+	treeFactor: 50,
+};
+export const DEFAULT_STATS: StatConfig[] = [
+	{
+		prop: "exercise",
+		title: "Exercise",
+		type: "habit",
+		unit: "min",
+		goal: "up",
+		freq: "day",
+		multiplier: 1,
+		mastery: 60,
+		streakEnabled: true,
+		boundaries: { min: 0, default: 0, max: 1440 },
+		color: { type: "relative", rgb: "0, 200, 100" },
+	},
+];
