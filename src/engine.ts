@@ -48,6 +48,62 @@ export class HabitEngine {
 	}
 
 	/*
+	 *  assign rank tier based on average performance
+	 *  masteryThreshold is 90-day average needed for diamond rank
+	 *  also calculates how close to rank-up
+	 */
+	static getRank(average: number, masteryThreshold: number) {
+		if (!masteryThreshold) return null;
+
+		const tiers = [
+			{ name: "Iron", threshold: 0.0 },
+			{ name: "Bronze", threshold: 0.15 },
+			{ name: "Silver", threshold: 0.35 },
+			{ name: "Gold", threshold: 0.5 },
+			{ name: "Platinum", threshold: 0.65 },
+			{ name: "Emerald", threshold: 0.8 },
+			{ name: "Diamond", threshold: 0.95 },
+		];
+
+		const ratio = average / masteryThreshold;
+		let idx = 0;
+
+		for (let i = 0; i < tiers.length; i++) {
+			const tier = tiers[i];
+			if (tier && ratio >= tier.threshold) {
+				idx = i;
+			} else {
+				break;
+			}
+		}
+
+		const curr = tiers[idx] || { name: "Iron", threshold: 0 };
+		const next = tiers[idx + 1] || null;
+		let prog = 100;
+
+		if (next) {
+			prog = Math.min(
+				100,
+				Math.max(
+					0,
+					Math.floor(
+						((ratio - curr.threshold) /
+							(next.threshold - curr.threshold)) *
+							100,
+					),
+				),
+			);
+		}
+
+		return {
+			name: curr.name,
+			cssClass: "hhm-rank-" + curr.name.toLowerCase(),
+			progress: prog,
+			nextRank: next ? next.name : "MAX",
+		};
+	}
+
+	/*
 	 *  calculate combined level and rank data for individual habits
 	 *  masteryThreshold is the 90-day average needed for diamond rank
 	 */
@@ -80,7 +136,6 @@ export class HabitEngine {
 
 			for (let i = 0; i < tiers.length; i++) {
 				const tier = tiers[i];
-				// Check that the tier exists before accessing its threshold
 				if (tier && ratio >= tier.threshold) {
 					idx = i;
 				} else {
@@ -348,59 +403,85 @@ export class HabitEngine {
 		if (!habit) return;
 
 		let sumCurrent90 = 0,
-			sumPrevious90 = 0;
+			entriesCurrent = 0;
+		let sumPrevious90 = 0,
+			entriesPrevious = 0;
 
 		// aggregate the last 90 days vs the 90 days before that
 		for (let i = 0; i < 90; i++) {
 			const dCur = lookup[i];
 			const dPrev = lookup[i + 90];
 
-			if (dCur && dPrev) {
-				const rawCur = (
-					dataMap[dCur] as Record<string, unknown> | undefined
-				)?.[stat.prop];
-				const rawPrev = (
-					dataMap[dPrev] as Record<string, unknown> | undefined
-				)?.[stat.prop];
+			if (dCur) {
+				const dateEntry = dataMap[dCur] as
+					| Record<string, unknown>
+					| undefined;
+				const val = dateEntry?.[stat.prop];
+				// Only add to average if the day was actually logged
+				if (val !== undefined && val !== null) {
+					sumCurrent90 += Number(val);
+					entriesCurrent++;
+					habit.logs90++;
+				}
+			}
 
-				if (rawCur !== undefined && rawCur !== null) habit.logs90++;
-
-				sumCurrent90 += this.sanitizeValue(rawCur, stat.boundaries);
-				sumPrevious90 += this.sanitizeValue(rawPrev, stat.boundaries);
+			if (dPrev) {
+				const dateEntry = dataMap[dPrev] as
+					| Record<string, unknown>
+					| undefined;
+				const val = dateEntry?.[stat.prop];
+				if (val !== undefined && val !== null) {
+					sumPrevious90 += Number(val);
+					entriesPrevious++;
+				}
 			}
 		}
 
-		habit.avg90 = sumCurrent90 / 90;
-		habit.prevAvg90 = sumPrevious90 / 90;
+		// calculate active averages: divisor is the count of logs, not the count of days
+		habit.avg90 = entriesCurrent > 0 ? sumCurrent90 / entriesCurrent : 0;
+		habit.prevAvg90 =
+			entriesPrevious > 0 ? sumPrevious90 / entriesPrevious : 0;
 
 		// resolve percentage trend
 		habit.trend =
-			sumPrevious90 === 0
+			habit.prevAvg90 === 0
 				? habit.avg90 > 0
 					? 100
 					: 0
-				: ((sumCurrent90 - sumPrevious90) / sumPrevious90) * 100;
+				: ((habit.avg90 - habit.prevAvg90) / habit.prevAvg90) * 100;
 
-		const daysLife = habit.firstLogDate
-			? window.moment().diff(window.moment(habit.firstLogDate), "days") +
-				1
-			: 1;
-		habit.lifetimeAvg = habit.lifetimeSum / daysLife;
+		// resolve lifetime average based only on recorded logs
+		const totalLogsLife = Object.values(dataMap).filter((p) => {
+			const val = (p as Record<string, unknown>)[stat.prop];
+			return val !== undefined && val !== null;
+		}).length;
 
-		// resolve rpg elements using the unified mastery structure
+		habit.lifetimeAvg =
+			totalLogsLife > 0 ? habit.lifetimeSum / totalLogsLife : 0;
+
+		// resolve rpg elements
 		if (stat.type === "habit") {
-			habit.mastery = HabitEngine.getMasteryData(
+			const lvl = HabitEngine.getLevelData(
 				habit.totalXp,
 				this.settings.treeFactor,
-				habit.avg90,
-				stat.mastery,
 			);
+			const rnk = HabitEngine.getRank(habit.avg90, stat.mastery);
+
+			habit.mastery = {
+				level: lvl.level,
+				totalXp: Math.floor(habit.totalXp),
+				currentXp: lvl.currentXp,
+				requiredXp: lvl.requiredXp,
+				progress: lvl.progress,
+				rankName: rnk?.name,
+				rankClass: rnk?.cssClass,
+				nextRank: rnk?.nextRank,
+			};
 		}
 
 		// set ui state flags
 		if (stat.streakEnabled) {
 			const successToday = this.isSuccess(habit.currentToday, stat.goal);
-			// atRisk only shows for positive habits that haven't been done yet today if the streak would end otherwise
 			habit.atRisk =
 				stat.goal === "up" &&
 				!successToday &&
